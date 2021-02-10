@@ -1,4 +1,4 @@
-Want to trade bitmax like a Warrior?
+Want to trade Bitmex like a Warrior?
 ====================================
 
 ![warrior_on_the_moon](doc/image/warrior_on_the_moon.jpg?raw=true)
