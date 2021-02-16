@@ -6,7 +6,7 @@ mod model;
 mod behaviour;
 
 use model::*;
-use model::{OrchestratorEvent::*, PriceType::*, ExchangeAction::*};
+use model::{OrchestratorEvent::*, PriceType::*};
 use behaviour::process_event;
 use std::io::{stdin, stdout, Write};
 use termion::event::Key;
@@ -49,11 +49,10 @@ fn main() {
         loop {
             match rx.recv() {
                 Ok(e) if e == Exit => {
-                    write!(stdout, "{}", termion::cursor::Show).unwrap();
+                    write!(stdout, "\r\n{}", termion::cursor::Show).unwrap();
                     break
                 },
                 Ok(e) => {
-                    stdout.flush().unwrap();
                     if let Some(order) = process_event(&e, &mut state) {
                         // send out the order
                         write!(stdout, "{}{}effect: {:?}{}", termion::cursor::Goto(1, 1), termion::clear::All, order, termion::cursor::Hide).unwrap();
