@@ -55,7 +55,7 @@ pub enum OrchestratorEvent {
     Exit             // from user
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ExchangeAction<'a> {
     IssueOrder(ExchangeOrder),
     CancelOrder(&'a str)

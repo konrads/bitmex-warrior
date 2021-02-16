@@ -2,11 +2,13 @@
 extern crate enum_display_derive;
 
 // use env_logger;
-mod model;
 mod behaviour;
+mod model;
+mod render;
 
 use model::*;
 use model::{OrchestratorEvent::*, PriceType::*};
+use render::render_state;
 use behaviour::process_event;
 use std::io::{stdin, stdout, Write};
 use termion::event::Key;
@@ -15,19 +17,19 @@ use termion::raw::IntoRawMode;
 use std::sync::mpsc;
 use std::thread;
 
-const USER_GUIDE: &str = "\
-.-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-.\r
-|                                       |\r
-|              BITMEX WARRIOR           |\r
-|                                       |\r
-|  z -> buy @ bid      x -> sell @ ask  |\r
-|  a -> buy @ ask      s -> sell @ bid  |\r
-|  + -> up qty         - -> down qty    |\r
-|  o -> rotate order types              |\r
-|  q -> cancel last order               |\r
-|  ctrl-c -> exit                       |\r
-|                                       |\r
-`-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-'\r
+const USER_GUIDE: &str =
+r".-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-.
+|                                       |
+|              BITMEX WARRIOR           |
+|                                       |
+|  z -> buy @ bid      x -> sell @ ask  |
+|  a -> buy @ ask      s -> sell @ bid  |
+|  + -> up qty         - -> down qty    |
+|  o -> rotate order types              |
+|  q -> cancel last order               |
+|  ctrl-c -> exit                       |
+|                                       |
+`-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-'
 ";
 
 /// Design:
@@ -59,7 +61,7 @@ fn main() {
                         stdout.flush().unwrap();
                     }
                     if state.has_refreshed {
-                        let render = render_state(&state);
+                        let render = render_state(USER_GUIDE, &state);
                         write!(stdout, "{}{}{}{}", termion::cursor::Goto(1, 1), termion::clear::All, render, termion::cursor::Hide).unwrap();
                         stdout.flush().unwrap();
                     }
@@ -94,18 +96,4 @@ fn main() {
         prev_key = key;
   }
   orchestrator_thread.join().unwrap();
-}
-
-fn render_state(state: &State) -> String {
-    let recent_order_if_present = match state.order {
-        Some(ref o) => format!("\r\nCURR ORDER: {} {} {:.5} @ {:.5}", o.ord_type, o.ord_status, o.qty, o.price),
-        None => "".to_string()
-    };
-    format!("{}\r\
-\r
-BID: {:.5} / ASK: {:.5}\r
-QTY: {:.5}\r
-ORDER TYPE: {}\r
-STATUS: {}{}",
-            USER_GUIDE, state.bid, state.ask, state.qty, state.order_type(), state.status, recent_order_if_present)
 }
