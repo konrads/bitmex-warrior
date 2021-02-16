@@ -16,3 +16,4 @@ TODOS
 * setup BITMEX Rest
 * add tests (to behaviour at least)
 * consider integration vs unit tests...
+* add lifecycle restrictions (cannot start new trade till last one filled/cancelled)
