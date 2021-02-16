@@ -5,6 +5,8 @@ authors = ["KS <ks@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+termion = "1.5.6"
+crossterm = "0.19.0"
 enum-display-derive = "*"
 log = "*"
 env_logger = "*"
@@ -12,7 +14,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 csv = "1"
 chrono = { version = "0.4", features = ["serde"] }
-uuid = { version = "0.7", features = ["serde"] }
+uuid = { version = "0.8", features = ["serde", "v4"] }
 
 [dependencies.ws]
 version = "*"
