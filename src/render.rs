@@ -1,5 +1,5 @@
 use crate::model;
-use model::{OrchestratorEvent, ExchangeAction, ExchangeOrder, OrderStatus, Side, State, OrchestratorEvent::*, PriceType::*, ExchangeAction::*};
+use model::State;
 
 
 pub fn render_state(header: &str, state: &State) -> String {
@@ -7,11 +7,11 @@ pub fn render_state(header: &str, state: &State) -> String {
         Some(ref o) => format!("\r\nCURR ORDER: {} {} {:.5} @ {:.5}", o.ord_type, o.ord_status, o.qty, o.price),
         None => "".to_string()
     };
-    format!(r"{}
-
-BID: {:.5} / ASK: {:.5}
-QTY: {:.5}
-ORDER TYPE: {}
+    format!("{}\r
+\r
+BID: {:.5} / ASK: {:.5}\r
+QTY: {:.5}\r
+ORDER TYPE: {}\r
 STATUS: {}{}",
             header, state.bid, state.ask, state.qty, state.order_type(), state.status, recent_order_if_present)
 }

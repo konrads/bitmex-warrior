@@ -8,7 +8,7 @@ use super::model::Side;
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "lowercase")]
 #[serde(tag = "op")]
-pub enum Request {
+pub enum Request{
     Subscribe { args: Vec<String> },
 }
 
@@ -30,31 +30,26 @@ pub enum TickDirection {
     MinusTick,
 }
 
-#[derive(Serialize, Deserialize, Debug, Display, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub enum TableType {
-    Trade,
-    OrderBookL2,
-    OrderBookL2_25,
-    Funding,
-}
-
 #[derive(Deserialize, Debug, Serialize, PartialEq)]
 #[serde(tag = "table")]
 #[serde(rename_all = "camelCase")]
-#[serde(deny_unknown_fields)]
+//#[serde(deny_unknown_fields)]
 pub enum Table {
     Trade {
         action: TableAction,
         data: Vec<TradeRow>
     },
-    OrderBookL2 {
+    // OrderBookL2 {
+    //     action: TableAction,
+    //     data: Vec<OrderBookRow>
+    // },
+    // OrderBookL2_25 {
+    //     action: TableAction,
+    //     data: Vec<OrderBookRow>
+    // },
+    OrderBook10 {
         action: TableAction,
-        data: Vec<OrderBookRow>
-    },
-    OrderBookL2_25 {
-        action: TableAction,
-        data: Vec<OrderBookRow>
+        data: Vec<OrderBookRow>,
     },
     Funding {
         action: TableAction,
@@ -71,7 +66,7 @@ pub enum Response {
         timestamp: DateTime<Utc>,
     },
     Subscribe {
-        subscribe: TableType,
+        subscribe: String,
         success: bool,
     },
     Error {
@@ -131,4 +126,13 @@ pub struct OrderBookRow {
     pub symbol: String,
     pub asks: Vec<[f64; 2]>,
     pub bids: Vec<[f64; 2]>
+}
+
+impl OrderBookRow {
+  pub fn first_bid(&self) -> f64 {
+      self.bids.iter().map(|x| x[0]).fold(f64::NAN, f64::max)
+  }
+  pub fn first_ask(&self) -> f64 {
+      self.asks.iter().map(|x| x[0]).fold(f64::NAN, f64::max)
+  }
 }

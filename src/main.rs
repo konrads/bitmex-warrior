@@ -11,7 +11,7 @@ mod ws_model;
 use model::*;
 use model::{OrchestratorEvent::*, PriceType::*};
 use ws_model::*;
-//use ws_handler::{process, Client};
+use ws_handler::Client;
 use render::render_state;
 use behaviour::process_event;
 use std::io::{stdin, stdout, Write};
@@ -21,19 +21,21 @@ use termion::raw::IntoRawMode;
 use std::sync::mpsc;
 use std::thread;
 
+const BITMEX_ADDR: &str = "wss://www.bitmex.com/realtime";
+
 const USER_GUIDE: &str =
-r".-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-.
-|                                       |
-|              BITMEX WARRIOR           |
-|                                       |
-|  z -> buy @ bid      x -> sell @ ask  |
-|  a -> buy @ ask      s -> sell @ bid  |
-|  + -> up qty         - -> down qty    |
-|  o -> rotate order types              |
-|  q -> cancel last order               |
-|  ctrl-c -> exit                       |
-|                                       |
-`-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-'
+".-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-.\r
+|                                       |\r
+|              BITMEX WARRIOR           |\r
+|                                       |\r
+|  z -> buy @ bid      x -> sell @ ask  |\r
+|  a -> buy @ ask      s -> sell @ bid  |\r
+|  + -> up qty         - -> down qty    |\r
+|  o -> rotate order types              |\r
+|  q -> cancel last order               |\r
+|  ctrl-c -> exit                       |\r
+|                                       |\r
+`-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-'\r
 ";
 
 /// Design:
@@ -47,7 +49,10 @@ r".-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-.
 /// 4. list WebSocket events, perhaps in ncurses
 /// 5...∞ mutations of the above
 fn main() {
+    env_logger::init();
+
     let (tx, rx) = mpsc::channel::<OrchestratorEvent>();
+    let tx2 = tx.clone();
     let orchestrator_thread = thread::spawn(move || {
         let mut state = State::new(10.0, 2.0);
         let mut stdout = stdout().into_raw_mode().unwrap();
@@ -77,21 +82,21 @@ fn main() {
             }
         }
     });
-    orchestrator_thread.join().unwrap();
 
-    // if let Err(error) = ws::connect(BITMEX_ADDR, |out| Client::new(out, &tx)) {
-    //     log::error!("Failed to create WebSocket due to: {:?}", error)
-    // }
-
+    let ws_thread = thread::spawn(move || {
+        if let Err(error) = ws::connect(BITMEX_ADDR, |out| Client::new(out, &tx2)) {
+            log::error!("Failed to create WebSocket due to: {:?}", error)
+        }
+    });
+\
     let stdin = stdin();
     let mut prev_key = Key::Ctrl('.');  // some random key...
     // http://ticki.github.io/blog/making-terminal-applications-in-rust-with-termion/
     for c in stdin.keys() {
         let key = c.unwrap();
-        // write!(stdout(), "{}{}...{:?}{}", termion::cursor::Goto(1, 1), termion::clear::All, key, termion::cursor::Hide).unwrap();
         match key {
-            Key::Char('+') => { tx.send(UpQty).unwrap(); () },
-            Key::Char('-') => { tx.send(DownQty).unwrap(); () },
+            Key::Char('+') | Key::Char('=') => { tx.send(UpQty).unwrap(); () },
+            Key::Char('-') | Key::Char('_') => { tx.send(DownQty).unwrap(); () },
             Key::Char('o') => { tx.send(RotateOrderType).unwrap(); () },
             _ if key == prev_key => (),
             Key::Char('z') => { tx.send(Buy(Bid)).unwrap();  () },
@@ -100,8 +105,11 @@ fn main() {
             Key::Char('s') => { tx.send(Sell(Bid)).unwrap(); () },
             Key::Char('q') => { tx.send(CancelLast).unwrap(); () },
             Key::Ctrl('c') => { tx.send(Exit).unwrap(); break},
-            _other => () // write!(stdout, "{}{}...{:?}{}", termion::cursor::Goto(1, 1), termion::clear::All, other, termion::cursor::Hide).unwrap(),
+            _other => ()  // { write!(stdout(), "{}{}...{:?}{}", termion::cursor::Goto(1, 1), termion::clear::All, _other, termion::cursor::Hide).unwrap(); () },
         }
         prev_key = key;
-  }
+    }
+
+    orchestrator_thread.join().unwrap();
+    ws_thread.join().unwrap();
 }
