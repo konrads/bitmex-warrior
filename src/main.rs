@@ -88,7 +88,7 @@ fn main() {
             log::error!("Failed to create WebSocket due to: {:?}", error)
         }
     });
-\
+
     let stdin = stdin();
     let mut prev_key = Key::Ctrl('.');  // some random key...
     // http://ticki.github.io/blog/making-terminal-applications-in-rust-with-termion/
