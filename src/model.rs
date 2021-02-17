@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
 
@@ -25,10 +26,10 @@ pub enum PriceType {
     Ask
 }
 
-#[derive(Debug, Display, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, Display, PartialEq, Clone)]
 pub enum Side {
     Buy,
-    Sell
+    Sell,
 }
 
 #[derive(Debug, PartialEq, Clone)]

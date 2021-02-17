@@ -5,9 +5,13 @@ extern crate enum_display_derive;
 mod behaviour;
 mod model;
 mod render;
+mod ws_handler;
+mod ws_model;
 
 use model::*;
 use model::{OrchestratorEvent::*, PriceType::*};
+use ws_model::*;
+//use ws_handler::{process, Client};
 use render::render_state;
 use behaviour::process_event;
 use std::io::{stdin, stdout, Write};
@@ -73,6 +77,11 @@ fn main() {
             }
         }
     });
+    orchestrator_thread.join().unwrap();
+
+    // if let Err(error) = ws::connect(BITMEX_ADDR, |out| Client::new(out, &tx)) {
+    //     log::error!("Failed to create WebSocket due to: {:?}", error)
+    // }
 
     let stdin = stdin();
     let mut prev_key = Key::Ctrl('.');  // some random key...
@@ -95,5 +104,4 @@ fn main() {
         }
         prev_key = key;
   }
-  orchestrator_thread.join().unwrap();
 }
