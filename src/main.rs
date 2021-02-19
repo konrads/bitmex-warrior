@@ -20,6 +20,8 @@ use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 use std::sync::mpsc;
 use std::thread;
+use bitmex_warrior::{show_cursor, refresh_ui};
+
 
 const BITMEX_ADDR: &str = "wss://www.bitmex.com/realtime";
 
@@ -60,19 +62,18 @@ fn main() {
         loop {
             match rx.recv() {
                 Ok(e) if e == Exit => {
-                    write!(stdout, "\r\n{}", termion::cursor::Show).unwrap();
+                    println!();
+                    show_cursor!(stdout);
                     break
                 },
                 Ok(e) => {
                     if let Some(order) = process_event(&e, &mut state) {
                         // send out the order
-                        write!(stdout, "{}{}effect: {:?}{}", termion::cursor::Goto(1, 1), termion::clear::All, order, termion::cursor::Hide).unwrap();
-                        stdout.flush().unwrap();
+                        refresh_ui!(stdout, format!("{:?}", order));
                     }
                     if state.has_refreshed {
                         let render = render_state(USER_GUIDE, &state);
-                        write!(stdout, "{}{}{}{}", termion::cursor::Goto(1, 1), termion::clear::All, render, termion::cursor::Hide).unwrap();
-                        stdout.flush().unwrap();
+                        refresh_ui!(stdout, render);
                     }
                 },
                 Err(err) => {
