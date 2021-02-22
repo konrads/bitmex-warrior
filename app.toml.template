@@ -1,0 +1,14 @@
+wss_url    = "wss://www.bitmex.com/realtime"
+http_url   = "http://www.bitmex.com"
+api_key    = "<API_KEY>"
+api_secret = "<SECRET>"
+
+pair = "XBTUSD"
+init_qty = 100
+qty_inc = 10
+wss_subscriptions = [
+    "trade:XBTUSD",
+    "order:XBTUSD",
+    "orderBook10:XBTUSD",
+    # "funding:XBTUSD"
+]

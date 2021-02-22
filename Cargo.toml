@@ -19,7 +19,5 @@ tungstenite = "0.13.0"
 bitmex = "0.2"
 ring = "0.16"
 hex = "0.4"
-
-[dependencies.ws]
-version = "*"
-features = ["ssl"]
+config = "0.10"
+lazy_static = "1.4"

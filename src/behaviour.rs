@@ -57,9 +57,21 @@ pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> 
             let new_order = ExchangeOrder { cl_ord_id: cl_ord_id, ord_status: OrderStatus::NotYetIssued, qty: state.qty, price: price, side: Side::Sell, ord_type: state.order_type() };
             Some(IssueOrder(new_order))
         }
-        UpdateOrder(order) => {
+        UpdateOrder(order) if order.ord_status == OrderStatus::Canceled && order.cl_ord_id != "" => {
             state.has_refreshed = true;
-            state.status = format!("Updated order {} of {:?} @ {:?}", order.cl_ord_id, order.qty, order.price);
+            state.status = format!("Canceled order {} {}", order.ord_type, order.cl_ord_id);
+            state.order = Some(ExchangeOrder { ord_status: OrderStatus::Canceled, .. order.clone() });
+            None
+        }
+        UpdateOrder(order) if order.ord_status == OrderStatus::Filled && order.cl_ord_id != "" => {
+            state.has_refreshed = true;
+            state.status = format!("Filled order {} {} of {} @ {}", order.ord_type, order.cl_ord_id, order.qty, order.price);
+            state.order = Some(ExchangeOrder { ord_status: OrderStatus::Filled, price: order.price, .. order.clone() });;
+            None
+        }
+        UpdateOrder(order) if order.cl_ord_id != "" => {
+            state.has_refreshed = true;
+            state.status = format!("Updated order {} {} of {:?} @ {:?}", order.ord_type, order.cl_ord_id, order.qty, order.price);
             state.order = Some((*order).clone());
             None
         }

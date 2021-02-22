@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use config::{ConfigError, Config, File, Environment};
 use std::fmt::Display;
 
 
@@ -86,5 +87,25 @@ impl State {
 
     pub fn rotate_order_type(&mut self) -> () {
         self.order_type_ind = (self.order_type_ind + 1) % ALL_ORDER_TYPES.len()
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct AppConfig {
+    pub wss_url:    String,
+    pub http_url:   String,
+    pub api_key:    String,
+    pub api_secret: String,
+    pub pair:       String,
+    pub init_qty:   f64,
+    pub qty_inc:    f64,
+    pub wss_subscriptions: Vec<String>,
+}
+
+impl AppConfig {
+    pub fn new(config_filename: &str) -> Result<Self, ConfigError> {
+        let mut c = Config::new();
+        c.merge(File::with_name(config_filename))?;
+        c.try_into()
     }
 }

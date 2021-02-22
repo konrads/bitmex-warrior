@@ -9,8 +9,8 @@ pub fn render_state(header: &str, state: &State) -> String {
     };
     format!("{}\r
 \r
-BID: {:.5} / ASK: {:.5}\r
-QTY: {:.5}\r
+BID: {:.2} / ASK: {:.2}\r
+QTY: {:.2}\r
 ORDER TYPE: {}\r
 STATUS: {}{}",
             header, state.bid, state.ask, state.qty, state.order_type(), state.status, recent_order_if_present)

@@ -1,5 +1,11 @@
 #[macro_use]
+extern crate config;
+#[macro_use]
+extern crate lazy_static;
+#[macro_use]
 extern crate enum_display_derive;
+
+use std::collections::HashMap;
 
 // use env_logger;
 mod behaviour;
@@ -24,7 +30,7 @@ use bitmex_warrior::{show_cursor, refresh_ui};
 use std::net::TcpListener;
 use tungstenite::{connect, Error, Message, Result};
 
-const BITMEX_ADDR: &str = "wss://www.bitmex.com/realtime";
+const BITMEX_URL: &str = "wss://www.bitmex.com/realtime";
 
 const USER_GUIDE: &str =
 ".-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-.\r
@@ -40,6 +46,10 @@ const USER_GUIDE: &str =
 |                                       |\r
 `-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-'\r
 ";
+
+lazy_static! {
+    static ref CFG: AppConfig = AppConfig::new("app").unwrap();
+}
 
 /// Design:
 /// 1. accept configuration describing traded instrument, trading pot
@@ -57,7 +67,7 @@ fn main() {
     let (tx, rx) = mpsc::channel::<OrchestratorEvent>();
     let tx2 = tx.clone();
     let orchestrator_thread = thread::spawn(move || {
-        let mut state = State::new(10.0, 2.0);
+        let mut state = State::new(CFG.init_qty, CFG.qty_inc);
         let mut stdout = stdout().into_raw_mode().unwrap();
         write!(stdout, "{}{}{}{}", termion::cursor::Goto(1, 1), termion::clear::All, USER_GUIDE, termion::cursor::Hide).unwrap();
         loop {
@@ -86,16 +96,12 @@ fn main() {
     });
 
     let _ws_thread = thread::spawn(move || {
-        handle_msg(BITMEX_ADDR,
-                   "",
-                   "",
-                   vec![
-                       "trade:XBTUSD".to_string(),
-                       "order:XBTUSD".to_string(),
-                       "orderBook10:XBTUSD".to_string(),
-                       // "funding:XBTUSD".to_string(),
-                       ],
-                   &tx2);
+        handle_msg(
+            CFG.wss_url.as_str(),
+            CFG.api_key.as_str(),
+            CFG.api_secret.as_str(),
+            CFG.wss_subscriptions.clone(),
+            &tx2);
     });
 
     let stdin = stdin();
