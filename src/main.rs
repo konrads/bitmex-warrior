@@ -11,7 +11,7 @@ mod ws_model;
 use model::*;
 use model::{OrchestratorEvent::*, PriceType::*};
 use ws_model::*;
-use ws_handler::Client;
+use ws_handler::handle_msg;
 use render::render_state;
 use behaviour::process_event;
 use std::io::{stdin, stdout, Write};
@@ -21,7 +21,8 @@ use termion::raw::IntoRawMode;
 use std::sync::mpsc;
 use std::thread;
 use bitmex_warrior::{show_cursor, refresh_ui};
-
+use std::net::TcpListener;
+use tungstenite::{connect, Error, Message, Result};
 
 const BITMEX_ADDR: &str = "wss://www.bitmex.com/realtime";
 
@@ -84,10 +85,17 @@ fn main() {
         }
     });
 
-    let ws_thread = thread::spawn(move || {
-        if let Err(error) = ws::connect(BITMEX_ADDR, |out| Client::new(out, &tx2)) {
-            log::error!("Failed to create WebSocket due to: {:?}", error)
-        }
+    let _ws_thread = thread::spawn(move || {
+        handle_msg(BITMEX_ADDR,
+                   "",
+                   "",
+                   vec![
+                       "trade:XBTUSD".to_string(),
+                       "order:XBTUSD".to_string(),
+                       "orderBook10:XBTUSD".to_string(),
+                       // "funding:XBTUSD".to_string(),
+                       ],
+                   &tx2);
     });
 
     let stdin = stdin();
@@ -105,12 +113,15 @@ fn main() {
             Key::Char('a') => { tx.send(Buy(Ask)).unwrap();  () },
             Key::Char('s') => { tx.send(Sell(Bid)).unwrap(); () },
             Key::Char('q') => { tx.send(CancelLast).unwrap(); () },
-            Key::Ctrl('c') => { tx.send(Exit).unwrap(); break},
+            Key::Ctrl('c') => {
+                tx.send(Exit).unwrap();
+                // ws_socket.close(None);
+                break
+            },
             _other => ()  // { write!(stdout(), "{}{}...{:?}{}", termion::cursor::Goto(1, 1), termion::clear::All, _other, termion::cursor::Hide).unwrap(); () },
         }
         prev_key = key;
     }
 
     orchestrator_thread.join().unwrap();
-    ws_thread.join().unwrap();
 }

@@ -2,14 +2,16 @@ use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use uuid::Uuid;
-use super::model::Side;
+use super::model::{Side, OrderStatus, OrderType};
 
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
-#[serde(rename_all = "lowercase")]
-#[serde(tag = "op")]
+#[serde(rename_all = "camelCase")]
+#[serde(tag = "op", content = "args")]
 pub enum Request{
-    Subscribe { args: Vec<String> },
+    Subscribe(Vec<String>),
+    #[serde(rename = "authKeyExpires")]
+    Authenticate(String, i64, String)
 }
 
 #[derive(Serialize, Deserialize, Debug, Display, PartialEq)]
@@ -39,14 +41,18 @@ pub enum Table {
         action: TableAction,
         data: Vec<TradeRow>
     },
-    // OrderBookL2 {
-    //     action: TableAction,
-    //     data: Vec<OrderBookRow>
-    // },
-    // OrderBookL2_25 {
-    //     action: TableAction,
-    //     data: Vec<OrderBookRow>
-    // },
+    OrderBookL2 {
+        action: TableAction,
+        data: Vec<OrderBookRow>
+    },
+    OrderBookL2_25 {
+        action: TableAction,
+        data: Vec<OrderBookRow>
+    },
+    Order {
+        action: TableAction,
+        data: Vec<OrderRow>
+    },
     OrderBook10 {
         action: TableAction,
         data: Vec<OrderBookRow>,
@@ -96,14 +102,17 @@ pub struct TradeRow {
 }
 
 #[derive(Deserialize, Debug, Serialize, PartialEq)]
-#[serde(deny_unknown_fields)]
+//#[serde(deny_unknown_fields)]
 #[serde(rename_all = "camelCase")]
 pub struct OrderRow {
-    pub processed: Option<DateTime<Utc>>,
+    pub timestamp: Option<DateTime<Utc>>,
     pub symbol: String,
-    pub id: u64,
-    pub side: Side,
-    pub size: Option<u64>,
+    #[serde(rename = "clOrdID")]
+    pub cl_ord_id: String,
+    pub side: Option<Side>,
+    pub ord_status: OrderStatus,
+    pub ord_type: Option<OrderType>,
+    pub order_qty: Option<f64>,
     pub price: Option<f64>,
 }
 

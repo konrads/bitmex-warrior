@@ -1,57 +1,67 @@
-use crate::model::{OrchestratorEvent, OrchestratorEvent::*};
-use crate::ws_model::{Request, Response, Response::*, Table::*};
 use std::sync::mpsc;
 
+use chrono::{Duration, Utc};
+use hex::encode as hexify;
+use ring::hmac;
+use tungstenite::{connect, Message};
 
-pub struct Client<'a> {
-    ws_sender: ws::Sender,
-    tx: &'a mpsc::Sender<OrchestratorEvent>,
-}
-
-impl <'a> Client<'a> {
-    pub fn new(out: ws::Sender, tx: &'a mpsc::Sender<OrchestratorEvent>) -> Self {
-        Client { ws_sender: out, tx: tx }
-    }
-}
+use crate::model::{Side, OrderStatus, OrderType, ExchangeOrder, OrchestratorEvent, OrchestratorEvent::*};
+use crate::ws_model::{Request, Response, Response::*, Table::*};
 
 
-impl<'a> ws::Handler for Client<'a> {
-    fn on_open(&mut self, _: ws::Handshake) -> ws::Result<()> {
-        let subscribe = Request::Subscribe {
-            args: vec![
-                "trade:XBTUSD".to_string(),
-                // "funding:XBTUSD".to_string(),
-                "orderBook10:XBTUSD".to_string(),
-            ],
-        };
+pub fn handle_msg(url: &str, api_key: &str, api_secret: &str, subscriptions: Vec<String>, tx: &mpsc::Sender<OrchestratorEvent>) {
+    let expires = (Utc::now() + Duration::seconds(100)).timestamp();
+    let signed_key = hmac::Key::new(hmac::HMAC_SHA256, api_secret.as_bytes());
+    let sign_message = format!("GET/realtime{}", expires);
+    let signature = hexify(hmac::sign(&signed_key, sign_message.as_bytes()));
+    let authenticate = Request::Authenticate(api_key.to_string(), expires, signature);
+    let (mut ws_socket, _) = connect(url).unwrap();
+    let subscribe = Request::Subscribe(subscriptions);
+    ws_socket.write_message(Message::text(serde_json::to_string(&authenticate).unwrap()));
+    ws_socket.write_message(Message::text(serde_json::to_string(&subscribe).unwrap()));
 
-        let ser = serde_json::to_string(&subscribe).unwrap();  // FIXME: apply error conversion
-        log::info!("Sending subscribe command: {:?}", ser);
-        self.ws_sender.send(ser)
-    }
-
-    fn on_message(&mut self, msg: ws::Message) -> ws::Result<()> {
-        let payload: String = msg.into_text().unwrap();
-        match serde_json::from_str::<Response>(&payload) {
-            Ok(Subscribe { subscribe, success }) =>
-                log::info!("Subscribed: {}: success: {}", subscribe, success),
-            Ok(i @ Info { .. }) =>
-                log::info!("info: {:?}", i),
-            Ok(e @ Error { .. }) =>
-                log::info!("response error: {:?} on payload {}", e, &payload),
-            Ok(Table(OrderBook10{ ref data, .. })) => {
-                data.first().map(|x| self.tx.send(NewAsk(x.first_ask())));
-                data.first().map(|x| self.tx.send(NewBid(x.first_bid())));
+    loop {
+        let msg= ws_socket.read_message().unwrap();
+        match msg {
+            Message::Text(ref payload) => {
+                match serde_json::from_str::<Response>(&payload) {
+                    Ok(Subscribe { subscribe, success }) => {
+                        tx.send(NewStatus(format!("Subscribed to {}: {}", subscribe, success)));
+                        ()
+                    }
+                    Ok(Info { info, .. }) => {
+                        tx.send(NewStatus(format!("Info on: {}", info)));
+                        ()
+                    }
+                    Ok(Error { error, .. }) => {
+                        tx.send(NewStatus(format!("Error on: {:?}", error)));
+                        ()
+                    }
+                    Ok(Table(OrderBook10{ ref data, .. })) => {
+                        data.first().map(|x| tx.send(NewAsk(x.first_ask())));
+                        data.first().map(|x| tx.send(NewBid(x.first_bid())));
+                    }
+                    Ok(Table(Order{ ref data, .. })) => {
+                        for x in data {
+                            tx.send(
+                                UpdateOrder(ExchangeOrder {
+                                    cl_ord_id: x.cl_ord_id.to_string(),
+                                    ord_status: x.ord_status.clone(),
+                                    ord_type: x.ord_type.unwrap_or_else(|| OrderType::Market).clone(), // FIXME
+                                    price: x.price.unwrap_or_else(|| -99.99),
+                                    qty: x.order_qty.unwrap_or_else(|| -99.99),
+                                    side: x.side.unwrap_or_else(|| Side::Buy).clone()  // FIXME
+                                }));
+                        }
+                    }
+                    Ok(e @ Table { .. }) =>
+                        log::info!("other table: {:?}", e),
+                    Err(err) =>
+                        log::error!("channel error {} on payload {}", err, &payload),
+                }
             }
-            Ok(e @ Table { .. }) =>
-                log::info!("other table: {:?}", e),
-            Err(err) =>
-                log::error!("channel error {} on payload {}", err, &payload),
+            Message::Binary(_) | Message::Ping(_) | Message::Pong(_) => {}
+            Message::Close(_) => break
         }
-        Ok(()) // never fail
-    }
-
-    fn on_error(&mut self, err: ws::Error) {
-        log::error!("On Error, {}", err)
     }
 }

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
 
-#[derive(Debug, Display, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, Display, PartialEq, Clone, Copy)]
 pub enum OrderType {
     Limit,
     StopLimit,
@@ -10,23 +10,23 @@ pub enum OrderType {
 }
 const ALL_ORDER_TYPES: &'static [OrderType] = &[OrderType::Limit, OrderType::StopLimit, OrderType::Market];
 
-#[derive(Debug, Display, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, Display, PartialEq, Clone, Copy)]
 pub enum OrderStatus {
     NotYetIssued,
     New,
     Filled,
     PartiallyFilled,
-    Cancelled,
+    Canceled,
     Rejected
 }
 
-#[derive(Debug, Display, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, Display, PartialEq, Clone, Copy)]
 pub enum PriceType {
     Bid,
     Ask
 }
 
-#[derive(Serialize, Deserialize, Debug, Display, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, Display, PartialEq, Clone, Copy)]
 pub enum Side {
     Buy,
     Sell,
@@ -52,6 +52,7 @@ pub enum OrchestratorEvent {
     RotateOrderType, // from user
     NewBid(f64),     // from WS
     NewAsk(f64),     // from WS
+    NewStatus(String),  // from WS
     UpdateOrder(ExchangeOrder),  // from WS/Rest
     Exit             // from user
 }
