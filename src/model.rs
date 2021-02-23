@@ -18,6 +18,7 @@ pub enum OrderStatus {
     Filled,
     PartiallyFilled,
     Canceled,
+    Canceling,
     Rejected
 }
 
@@ -59,7 +60,7 @@ pub enum OrchestratorEvent {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum ExchangeAction<'a> {
+pub enum ExchangeCmd<'a> {
     IssueOrder(ExchangeOrder),
     CancelOrder(&'a str)
 }

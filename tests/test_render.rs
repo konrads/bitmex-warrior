@@ -9,8 +9,8 @@ fn test_render_state() {
     let rendered = render_state("HELLO!", state);
     let expected = format!("HELLO!\r
 \r
-BID: -1.00000 / ASK: -1.00000\r
-QTY: 10.00000\r
+BID: -1.00 / ASK: -1.00\r
+QTY: 10.00\r
 ORDER TYPE: Limit\r
 STATUS: ");
     assert_eq!(rendered, expected);

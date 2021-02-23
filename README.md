@@ -12,8 +12,8 @@ Disclaimer: This is a Rust playground project, I know there are alternatives eg.
 
 TODOS
 -----
-* setup BITMEX WS
 * setup BITMEX Rest
+* convert to Result<>
 * add tests (to behaviour at least)
 * consider integration vs unit tests...
 * add lifecycle restrictions (cannot start new trade till last one filled/cancelled)

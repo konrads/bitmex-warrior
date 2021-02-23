@@ -48,8 +48,8 @@ pub fn handle_msg(url: &str, api_key: &str, api_secret: &str, subscriptions: Vec
                                     cl_ord_id: x.cl_ord_id.to_string(),
                                     ord_status: x.ord_status.clone(),
                                     ord_type: x.ord_type.unwrap_or_else(|| OrderType::Market).clone(), // FIXME
-                                    price: x.price.unwrap_or_else(|| -99.99),
-                                    qty: x.order_qty.unwrap_or_else(|| -99.99),
+                                    price: x.price.unwrap_or_else(|| -99.99),                          // FIXME should be opt?
+                                    qty: x.order_qty.unwrap_or_else(|| -99.99),                        // FIXME should be opt?
                                     side: x.side.unwrap_or_else(|| Side::Buy).clone()  // FIXME
                                 }));
                         }

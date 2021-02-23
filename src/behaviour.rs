@@ -1,9 +1,9 @@
 use crate::model;
-use model::{OrchestratorEvent, ExchangeAction, ExchangeOrder, OrderStatus, Side, State, OrchestratorEvent::*, PriceType::*, ExchangeAction::*};
+use model::{OrchestratorEvent, ExchangeCmd, ExchangeOrder, OrderStatus, Side, State, OrchestratorEvent::*, PriceType::*, ExchangeCmd::*};
 use uuid::Uuid;
 
 
-pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> Option<ExchangeAction<'a>> {  // probably need dyn...
+pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> Option<ExchangeCmd<'a>> {  // probably need dyn...
     state.has_refreshed = false;
     match event {
         UpQty => {
@@ -44,6 +44,7 @@ pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> 
             state.has_refreshed = true;
             state.status = format!("New buy order {} of {} @ {}", cl_ord_id, state.qty, price);
             let new_order = ExchangeOrder { cl_ord_id: cl_ord_id, ord_status: OrderStatus::NotYetIssued, qty: state.qty, price: price, side: Side::Buy, ord_type: state.order_type() };
+            state.order = Some(new_order.clone());
             Some(IssueOrder(new_order))
         }
         Sell(price_type) => {
@@ -55,31 +56,43 @@ pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> 
             state.has_refreshed = true;
             state.status = format!("New sell order {} of {} @ {}", cl_ord_id, state.qty, price);
             let new_order = ExchangeOrder { cl_ord_id: cl_ord_id, ord_status: OrderStatus::NotYetIssued, qty: state.qty, price: price, side: Side::Sell, ord_type: state.order_type() };
+            state.order = Some(new_order.clone());
             Some(IssueOrder(new_order))
         }
-        UpdateOrder(order) if order.ord_status == OrderStatus::Canceled && order.cl_ord_id != "" => {
+        UpdateOrder(order) if order.ord_status == OrderStatus::Canceled && state.order.as_ref().map_or_else(|| false, |x| x.cl_ord_id == order.cl_ord_id) => {
+            match order.ord_status {
+                OrderStatus::Canceled => {
+                    state.status = format!("Canceled order {} {}", order.ord_type, order.cl_ord_id);
+                    state.order = Some(ExchangeOrder { ord_status: OrderStatus::Canceled, .. order.clone() });
+                }
+                OrderStatus::Filled => {
+                    state.status = format!("Filled order {} {} of {} @ {}", order.ord_type, order.cl_ord_id, order.qty, order.price);
+                    state.order = Some(ExchangeOrder { ord_status: OrderStatus::Filled, price: order.price, .. order.clone() });;
+                }
+                _ => {
+                    state.status = format!("Updated order {} {} of {:?} @ {:?}", order.ord_type, order.cl_ord_id, order.qty, order.price);
+                    state.order = Some(ExchangeOrder { ord_status: order.ord_status, .. order.clone() });
+                }
+            };
             state.has_refreshed = true;
-            state.status = format!("Canceled order {} {}", order.ord_type, order.cl_ord_id);
-            state.order = Some(ExchangeOrder { ord_status: OrderStatus::Canceled, .. order.clone() });
             None
         }
-        UpdateOrder(order) if order.ord_status == OrderStatus::Filled && order.cl_ord_id != "" => {
+        UpdateOrder(order) => {
             state.has_refreshed = true;
-            state.status = format!("Filled order {} {} of {} @ {}", order.ord_type, order.cl_ord_id, order.qty, order.price);
-            state.order = Some(ExchangeOrder { ord_status: OrderStatus::Filled, price: order.price, .. order.clone() });;
+            state.status = format!("Ignoring external order {:?}", order);
             None
+
         }
-        UpdateOrder(order) if order.cl_ord_id != "" => {
-            state.has_refreshed = true;
-            state.status = format!("Updated order {} {} of {:?} @ {:?}", order.ord_type, order.cl_ord_id, order.qty, order.price);
-            state.order = Some((*order).clone());
-            None
-        }
-        CancelLast if state.order.is_some() => {
+        CancelLast if state.order.as_ref().map_or_else(|| false, |x| x.ord_status == OrderStatus::New || x.ord_status == OrderStatus::NotYetIssued) => {
             let order = state.order.as_ref().unwrap();
             state.has_refreshed = true;
-            state.status = format!("Cancelling order: {}", order.cl_ord_id);
+            state.status = format!("Issued order cancel: {}", order.cl_ord_id);
             Some(CancelOrder(&order.cl_ord_id ))
+        }
+        CancelLast => {
+            state.has_refreshed = true;
+            state.status = format!("No order active, ignoring cancel!");
+            None
         }
         NewStatus(status) => {
             state.status = status.to_string();

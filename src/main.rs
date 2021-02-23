@@ -10,14 +10,15 @@ use std::collections::HashMap;
 // use env_logger;
 mod behaviour;
 mod model;
+mod rest;
 mod render;
-mod ws_handler;
+mod ws;
 mod ws_model;
 
 use model::*;
 use model::{OrchestratorEvent::*, PriceType::*};
 use ws_model::*;
-use ws_handler::handle_msg;
+use ws::handle_msg;
 use render::render_state;
 use behaviour::process_event;
 use std::io::{stdin, stdout, Write};
@@ -66,6 +67,7 @@ fn main() {
 
     let (tx, rx) = mpsc::channel::<OrchestratorEvent>();
     let tx2 = tx.clone();
+    let tx3 = tx.clone();
     let orchestrator_thread = thread::spawn(move || {
         let mut state = State::new(CFG.init_qty, CFG.qty_inc);
         let mut stdout = stdout().into_raw_mode().unwrap();
@@ -78,9 +80,9 @@ fn main() {
                     break
                 },
                 Ok(e) => {
-                    if let Some(order) = process_event(&e, &mut state) {
+                    if let Some(cmd) = process_event(&e, &mut state) {
                         // send out the order
-                        refresh_ui!(stdout, format!("{:?}", order));
+                        rest::issue_order(&cmd, &tx3.clone());
                     }
                     if state.has_refreshed {
                         let render = render_state(USER_GUIDE, &state);

@@ -21,3 +21,5 @@ ring = "0.16"
 hex = "0.4"
 config = "0.10"
 lazy_static = "1.4"
+reqwest = { version = "0.11", features = ["json"] }
+tokio = { version = "1", features = ["full"] }

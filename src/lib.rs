@@ -6,7 +6,7 @@ use termion;
 pub mod behaviour;
 pub mod model;
 pub mod render;
-pub mod ws_handler;
+pub mod ws;
 pub mod ws_model;
 
 #[macro_export]
