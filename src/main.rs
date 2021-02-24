@@ -12,6 +12,7 @@ mod behaviour;
 mod model;
 mod rest;
 mod render;
+mod sign;
 mod ws;
 mod ws_model;
 
@@ -42,7 +43,7 @@ const USER_GUIDE: &str =
 |  a -> buy @ ask      s -> sell @ bid  |\r
 |  + -> up qty         - -> down qty    |\r
 |  o -> rotate order types              |\r
-|  q -> cancel last order               |\r
+|  c -> cancel last order               |\r
 |  ctrl-c -> exit                       |\r
 |                                       |\r
 `-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-'\r
@@ -74,15 +75,23 @@ fn main() {
         write!(stdout, "{}{}{}{}", termion::cursor::Goto(1, 1), termion::clear::All, USER_GUIDE, termion::cursor::Hide).unwrap();
         loop {
             match rx.recv() {
-                Ok(e) if e == Exit => {
+                Ok(Exit) => {
                     println!();
                     show_cursor!(stdout);
                     break
                 },
                 Ok(e) => {
                     if let Some(cmd) = process_event(&e, &mut state) {
-                        // send out the order
-                        rest::issue_order(&cmd, &tx3.clone());
+                        match cmd {
+                            ExchangeCmd::CancelOrder(cl_ord_id) => {
+                                rest::cancel_order(CFG.http_url.as_str(), CFG.api_key.as_str(), CFG.api_secret.as_str(), cl_ord_id, &mut tx3.clone());
+                                ()
+                            }
+                            ExchangeCmd::IssueOrder(order) => {
+                                rest::issue_order(CFG.http_url.as_str(), CFG.api_key.as_str(), CFG.api_secret.as_str(), CFG.symbol.as_str(), &order, &mut tx3.clone());
+                                ()
+                            }
+                        }
                     }
                     if state.has_refreshed {
                         let render = render_state(USER_GUIDE, &state);
@@ -120,7 +129,7 @@ fn main() {
             Key::Char('x') => { tx.send(Sell(Ask)).unwrap(); () },
             Key::Char('a') => { tx.send(Buy(Ask)).unwrap();  () },
             Key::Char('s') => { tx.send(Sell(Bid)).unwrap(); () },
-            Key::Char('q') => { tx.send(CancelLast).unwrap(); () },
+            Key::Char('c') => { tx.send(CancelLast).unwrap(); () },
             Key::Ctrl('c') => {
                 tx.send(Exit).unwrap();
                 // ws_socket.close(None);

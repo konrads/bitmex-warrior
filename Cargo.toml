@@ -3,6 +3,7 @@ name = "bitmex-warrior"
 version = "0.1.0"
 authors = ["KS <ks@gmail.com>"]
 edition = "2018"
+default-run = "main"
 
 [dependencies]
 termion = "1.5.6"
@@ -23,3 +24,12 @@ config = "0.10"
 lazy_static = "1.4"
 reqwest = { version = "0.11", features = ["json"] }
 tokio = { version = "1", features = ["full"] }
+urlencoding = {version = "1.1.1" }
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
+
+[[bin]]
+name = "cli"
+path = "src/bin/cli.rs"

@@ -6,10 +6,9 @@ use std::fmt::Display;
 #[derive(Serialize, Deserialize, Debug, Display, PartialEq, Clone, Copy)]
 pub enum OrderType {
     Limit,
-    StopLimit,
     Market
 }
-const ALL_ORDER_TYPES: &'static [OrderType] = &[OrderType::Limit, OrderType::StopLimit, OrderType::Market];
+const ALL_ORDER_TYPES: &'static [OrderType] = &[OrderType::Limit, OrderType::Market];
 
 #[derive(Serialize, Deserialize, Debug, Display, PartialEq, Clone, Copy)]
 pub enum OrderStatus {
@@ -97,7 +96,7 @@ pub struct AppConfig {
     pub http_url:   String,
     pub api_key:    String,
     pub api_secret: String,
-    pub pair:       String,
+    pub symbol:     String,
     pub init_qty:   f64,
     pub qty_inc:    f64,
     pub wss_subscriptions: Vec<String>,

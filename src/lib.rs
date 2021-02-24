@@ -6,8 +6,15 @@ use termion;
 pub mod behaviour;
 pub mod model;
 pub mod render;
+pub mod rest;
+pub mod sign;
 pub mod ws;
 pub mod ws_model;
+
+use crate::model::{Side, OrderStatus, OrderType, ExchangeOrder, OrchestratorEvent, OrchestratorEvent::*};
+use crate::ws_model::{Request, Response, Response::*, Table::*};
+
+
 
 #[macro_export]
 macro_rules! refresh_ui {

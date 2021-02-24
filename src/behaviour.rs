@@ -23,7 +23,6 @@ pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> 
             None
         }
         NewBid(bid) if state.bid == *bid => None,
-        NewBid(bid) if state.bid == *bid => None,
         NewBid(bid) => {
             state.has_refreshed = true;
             state.bid = *bid;

@@ -5,15 +5,14 @@ use hex::encode as hexify;
 use ring::hmac;
 use tungstenite::{connect, Message};
 
+use crate::sign::sign;
 use crate::model::{Side, OrderStatus, OrderType, ExchangeOrder, OrchestratorEvent, OrchestratorEvent::*};
 use crate::ws_model::{Request, Response, Response::*, Table::*};
 
 
 pub fn handle_msg(url: &str, api_key: &str, api_secret: &str, subscriptions: Vec<String>, tx: &mpsc::Sender<OrchestratorEvent>) {
     let expires = (Utc::now() + Duration::seconds(100)).timestamp();
-    let signed_key = hmac::Key::new(hmac::HMAC_SHA256, api_secret.as_bytes());
-    let sign_message = format!("GET/realtime{}", expires);
-    let signature = hexify(hmac::sign(&signed_key, sign_message.as_bytes()));
+    let signature = sign(&format!("GET/realtime{}", expires), api_secret);
     let authenticate = Request::Authenticate(api_key.to_string(), expires, signature);
     let (mut ws_socket, _) = connect(url).unwrap();
     let subscribe = Request::Subscribe(subscriptions);
