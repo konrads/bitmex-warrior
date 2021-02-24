@@ -1,5 +1,8 @@
 wss_url    = "wss://www.bitmex.com/realtime"
-http_url   = "http://www.bitmex.com"
+http_url   = "https://www.bitmex.com"
+# or for testnet: wss_url    = "wss://testnet.bitmex.com/realtime"
+# or for testnet: http_url   = "https://testnet.bitmex.com"
+
 api_key    = "<API_KEY>"
 api_secret = "<SECRET>"
 
