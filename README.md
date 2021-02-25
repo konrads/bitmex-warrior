@@ -13,4 +13,6 @@ Disclaimer: This is a Rust playground project, I know there are alternatives eg.
 TODOS
 -----
 * convert to Result<>
+* remove unwrap()s
 * consider integration vs unit tests...
+* add doc comment tests

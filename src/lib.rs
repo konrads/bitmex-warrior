@@ -3,7 +3,7 @@ extern crate enum_display_derive;
 
 use termion;
 
-pub mod behaviour;
+pub mod orchestrator;
 pub mod model;
 pub mod render;
 pub mod sign;

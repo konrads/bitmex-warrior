@@ -7,7 +7,7 @@ extern crate enum_display_derive;
 
 use std::collections::HashMap;
 
-mod behaviour;
+mod orchestrator;
 mod model;
 mod render;
 mod sign;
@@ -21,7 +21,7 @@ use model::{OrchestratorEvent::*, PriceType::*};
 use ws_model::*;
 use ws::handle_msg;
 use render::render_state;
-use behaviour::process_event;
+use orchestrator::process_event;
 use std::io::{stdin, stdout, Write};
 use termion::event::Key;
 use termion::input::TermRead;

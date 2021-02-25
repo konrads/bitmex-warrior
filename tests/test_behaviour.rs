@@ -1,5 +1,5 @@
 use bitmex_warrior::model::*;
-use bitmex_warrior::behaviour::process_event;
+use bitmex_warrior::orchestrator::process_event;
 
 #[cfg(test)]
 
