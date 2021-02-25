@@ -18,24 +18,24 @@ const API_ORDER_PATH: &str = "/api/v1/order";
 pub async fn issue_order(root_url: &str, api_key: &str, api_secret: &str, symbol: &str, order: &ExchangeOrder, tx: &mut mpsc::Sender<OrchestratorEvent>) -> Result<(), reqwest::Error> {
     // let mut params = HashMap::new();
     let url_params = match order {
-        ExchangeOrder { cl_ord_id, ord_type, price, qty, side, .. } if *ord_type == Limit  => {
+        ExchangeOrder { cl_ord_id, ord_type, price, qty, side, .. } if ord_type.map_or_else(|| false, |x| x == Limit) => {
             vec![("symbol".to_string(),  symbol.to_string()),
              ("ordType".to_string(),     "Limit".to_string()),
              ("timeInForce".to_string(), "GoodTillCancel".to_string()),
              // ("execInst".to_string(),    "ParticipateDoNotInitiate".to_string()),
-             ("orderQty".to_string(),    qty.to_string()),
-             ("side".to_string(),        side.to_string()),
-             ("price".to_string(),       price.to_string()),
+             ("orderQty".to_string(),    qty.unwrap().to_string()),
+             ("side".to_string(),        side.unwrap().to_string()),
+             ("price".to_string(),       price.unwrap().to_string()),
              ("clOrdID".to_string(),     cl_ord_id.to_string())]
             //format!("symbol={}&ordType={}&timeInForce=GoodTillCancel&orderQty={}&side={}&price={}&clOrdID={}", symbol, *ord_type, qty, side, price, cl_ord_id)
         }
-        ExchangeOrder { cl_ord_id, ord_type, price, qty, side, .. } if *ord_type == Market => {
+        ExchangeOrder { cl_ord_id, ord_type, price, qty, side, .. } if ord_type.map_or_else(|| false, |x| x == Market) => {
             //let qty_str = qty.to_string();
             vec![("symbol".to_string(),  symbol.to_string()),
              ("ordType".to_string(),     "Limit".to_string()),
              ("timeInForce".to_string(), "GoodTillCancel".to_string()),
-             ("orderQty".to_string(),    qty.to_string()),
-             ("side".to_string(),        side.to_string()),
+             ("orderQty".to_string(),    qty.unwrap().to_string()),
+             ("side".to_string(),        side.unwrap().to_string()),
              ("clOrdID".to_string(),     cl_ord_id.to_string())]
             //format!("symbol={}&ordType={}&timeInForce=GoodTillCancel&orderQty={}&side={}&clOrdID={}", symbol, *ord_type, qty, side, cl_ord_id)
         }
@@ -68,10 +68,10 @@ pub async fn issue_order(root_url: &str, api_key: &str, api_secret: &str, symbol
                         UpdateOrder(ExchangeOrder {
                             cl_ord_id: cl_ord_id.to_string(),
                             ord_status: ord_status.clone(),
-                            ord_type: ord_type.unwrap_or_else(|| OrderType::Market).clone(),
-                            price: price,
-                            qty: order_qty,
-                            side: side}.clone()
+                            ord_type: ord_type.clone(),
+                            price: Some(price.clone()),
+                            qty: Some(order_qty.clone()),
+                            side: Some(side)}.clone()
                         ));
                 }
                 Err(err) =>

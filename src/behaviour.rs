@@ -53,7 +53,7 @@ pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> 
             };
             state.has_refreshed = true;
             state.status = format!("New buy order {} of {} @ {}", cl_ord_id, state.qty, price);
-            let new_order = ExchangeOrder { cl_ord_id: cl_ord_id, ord_status: OrderStatus::NotYetIssued, qty: state.qty, price: price, side: Side::Buy, ord_type: state.order_type() };
+            let new_order = ExchangeOrder { cl_ord_id: cl_ord_id, ord_status: OrderStatus::NotYetIssued, qty: Some(state.qty), price: Some(price), side: Some(Side::Buy), ord_type: Some(state.order_type()) };
             state.order = Some(new_order.clone());
             Some(IssueOrder(new_order))
         }
@@ -66,23 +66,28 @@ pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> 
             };
             state.has_refreshed = true;
             state.status = format!("New sell order {} of {} @ {}", cl_ord_id, state.qty, price);
-            let new_order = ExchangeOrder { cl_ord_id: cl_ord_id, ord_status: OrderStatus::NotYetIssued, qty: state.qty, price: price, side: Side::Sell, ord_type: state.order_type() };
+            let new_order = ExchangeOrder { cl_ord_id: cl_ord_id, ord_status: OrderStatus::NotYetIssued, qty: Some(state.qty), price: Some(price), side: Some(Side::Sell), ord_type: Some(state.order_type()) };
             state.order = Some(new_order.clone());
             Some(IssueOrder(new_order))
         }
         UpdateOrder(order) if state.order.as_ref().map_or_else(|| false, |x| x.cl_ord_id == order.cl_ord_id) => {
             log::info!("UpdateOrder: {:?}", event);
+            let curr_order = state.order.as_ref().unwrap();
+            let side = order.side.unwrap_or_else(|| curr_order.side.unwrap());
+            let ord_type = order.ord_type.unwrap_or_else(|| curr_order.ord_type.unwrap());
+            let qty = order.qty.unwrap_or_else(|| curr_order.qty.unwrap());
+            let price = order.price.unwrap_or_else(|| curr_order.price.unwrap());
             match order.ord_status {
                 OrderStatus::Canceled => {
-                    state.status = format!("Canceled {} {} order: {}", order.side, order.ord_type, order.cl_ord_id);
+                    state.status = format!("Canceled {} {} order: {}", side, ord_type, order.cl_ord_id);
                     state.order = None;
                 }
                 OrderStatus::Filled => {
-                    state.status = format!("Filled {} {} order: {} of {} @ {}", order.side, order.ord_type, order.cl_ord_id, order.qty, order.price);
+                    state.status = format!("Filled {} {} order: {} of {} @ {}", side, ord_type, order.cl_ord_id, qty, price);
                     state.order = None;
                 }
                 _ => {
-                    state.status = format!("Updated {} {} order: {} of {:?} @ {:?}", order.side, order.ord_type, order.cl_ord_id, order.qty, order.price);
+                    state.status = format!("Updated {} {} order: {} of {:?} @ {:?}", side, ord_type, order.cl_ord_id, qty, price);
                     state.order = Some(ExchangeOrder { ord_status: order.ord_status, .. order.clone() });
                 }
             };

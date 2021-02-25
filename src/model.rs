@@ -37,10 +37,10 @@ pub enum Side {
 pub struct ExchangeOrder {
     pub cl_ord_id: String,
     pub ord_status: OrderStatus,
-    pub ord_type: OrderType,
-    pub price: f64,
-    pub qty: f64,
-    pub side: Side,
+    pub ord_type: Option<OrderType>,
+    pub price: Option<f64>,
+    pub qty: Option<f64>,
+    pub side: Option<Side>,
 }
 
 #[derive(Debug, PartialEq)]
