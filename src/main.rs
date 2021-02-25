@@ -7,7 +7,6 @@ extern crate enum_display_derive;
 
 use std::collections::HashMap;
 
-// use env_logger;
 mod behaviour;
 mod model;
 mod render;
@@ -32,6 +31,7 @@ use std::thread;
 use bitmex_warrior::{show_cursor, refresh_ui};
 use std::net::TcpListener;
 use tungstenite::{connect, Error, Message, Result};
+use log4rs;
 
 
 const USER_GUIDE: &str =
@@ -64,7 +64,20 @@ lazy_static! {
 /// 4. list WebSocket events, perhaps in ncurses
 /// 5...∞ mutations of the above
 fn main() {
-    env_logger::init();
+    log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
+    log::info!(r"
+ ▄▄▄▄    ██▓▄▄▄█████▓ ███▄ ▄███▓▓█████ ▒██   ██▒       █     █░ ▄▄▄       ██▀███   ██▀███   ██▓ ▒█████   ██▀███         ▐██▌
+▓█████▄ ▓██▒▓  ██▒ ▓▒▓██▒▀█▀ ██▒▓█   ▀ ▒▒ █ █ ▒░      ▓█░ █ ░█░▒████▄    ▓██ ▒ ██▒▓██ ▒ ██▒▓██▒▒██▒  ██▒▓██ ▒ ██▒       ▐██▌
+▒██▒ ▄██▒██▒▒ ▓██░ ▒░▓██    ▓██░▒███   ░░  █   ░      ▒█░ █ ░█ ▒██  ▀█▄  ▓██ ░▄█ ▒▓██ ░▄█ ▒▒██▒▒██░  ██▒▓██ ░▄█ ▒       ▐██▌
+▒██░█▀  ░██░░ ▓██▓ ░ ▒██    ▒██ ▒▓█  ▄  ░ █ █ ▒       ░█░ █ ░█ ░██▄▄▄▄██ ▒██▀▀█▄  ▒██▀▀█▄  ░██░▒██   ██░▒██▀▀█▄         ▓██▒
+░▓█  ▀█▓░██░  ▒██▒ ░ ▒██▒   ░██▒░▒████▒▒██▒ ▒██▒      ░░██▒██▓  ▓█   ▓██▒░██▓ ▒██▒░██▓ ▒██▒░██░░ ████▓▒░░██▓ ▒██▒       ▒▄▄
+░▒▓███▀▒░▓    ▒ ░░   ░ ▒░   ░  ░░░ ▒░ ░▒▒ ░ ░▓ ░      ░ ▓░▒ ▒   ▒▒   ▓▒█░░ ▒▓ ░▒▓░░ ▒▓ ░▒▓░░▓  ░ ▒░▒░▒░ ░ ▒▓ ░▒▓░       ░▀▀▒
+▒░▒   ░  ▒ ░    ░    ░  ░      ░ ░ ░  ░░░   ░▒ ░        ▒ ░ ░    ▒   ▒▒ ░  ░▒ ░ ▒░  ░▒ ░ ▒░ ▒ ░  ░ ▒ ▒░   ░▒ ░ ▒░       ░  ░
+ ░    ░  ▒ ░  ░      ░      ░      ░    ░    ░          ░   ░    ░   ▒     ░░   ░   ░░   ░  ▒ ░░ ░ ░ ▒    ░░   ░           ░
+ ░       ░                  ░      ░  ░ ░    ░            ░          ░  ░   ░        ░      ░      ░ ░     ░            ░
+      ░
+    ");
+
 
     let (tx, rx) = mpsc::channel::<OrchestratorEvent>();
     let tx2 = tx.clone();

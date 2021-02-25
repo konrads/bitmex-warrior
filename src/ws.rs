@@ -51,7 +51,7 @@ pub fn handle_msg(url: &str, api_key: &str, api_secret: &str, subscriptions: Vec
                         }
                     }
                     Ok(e @ Table { .. }) =>
-                        log::info!("other table: {:?}", e),
+                        log::info!("ignoring other table: {:?}", e),
                     Err(err) =>
                         log::error!("channel error {} on payload {}", err, &payload),
                 }

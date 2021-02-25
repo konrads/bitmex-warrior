@@ -45,6 +45,7 @@ pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> 
             None
         }
         Buy(price_type) => {
+            log::info!("Buy: {:?}, state: {:?}", event, state);
             let cl_ord_id = Uuid::new_v4().to_string();
             let price = match *price_type {
                 Bid => state.bid,
@@ -57,6 +58,7 @@ pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> 
             Some(IssueOrder(new_order))
         }
         Sell(price_type) => {
+            log::info!("Sell: {:?}, state: {:?}", event, state);
             let cl_ord_id = Uuid::new_v4().to_string();
             let price = match *price_type {
                 Bid => state.bid,
@@ -69,17 +71,18 @@ pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> 
             Some(IssueOrder(new_order))
         }
         UpdateOrder(order) if state.order.as_ref().map_or_else(|| false, |x| x.cl_ord_id == order.cl_ord_id) => {
+            log::info!("UpdateOrder: {:?}", event);
             match order.ord_status {
                 OrderStatus::Canceled => {
-                    state.status = format!("Canceled order {} {}", order.ord_type, order.cl_ord_id);
+                    state.status = format!("Canceled {} {} order: {}", order.side, order.ord_type, order.cl_ord_id);
                     state.order = None;
                 }
                 OrderStatus::Filled => {
-                    state.status = format!("Filled order {} {} of {} @ {}", order.ord_type, order.cl_ord_id, order.qty, order.price);
+                    state.status = format!("Filled {} {} order: {} of {} @ {}", order.side, order.ord_type, order.cl_ord_id, order.qty, order.price);
                     state.order = None;
                 }
                 _ => {
-                    state.status = format!("Updated order {} {} of {:?} @ {:?}", order.ord_type, order.cl_ord_id, order.qty, order.price);
+                    state.status = format!("Updated {} {} order: {} of {:?} @ {:?}", order.side, order.ord_type, order.cl_ord_id, order.qty, order.price);
                     state.order = Some(ExchangeOrder { ord_status: order.ord_status, .. order.clone() });
                 }
             };
@@ -87,8 +90,11 @@ pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> 
             None
         }
         UpdateOrder(order) => {
-            state.has_refreshed = true;
-            state.status = format!("Ignoring external order update: {:?}, given current state: {:?}", order, state);
+            if order.cl_ord_id == "" {
+                log::info!("Ignoring external order update: {:?}, given current state: {:?}", order, state);
+            } else {
+                log::info!("Ignoring update of order that has been potentially Filled/Cancelled, order {:?}, given current state: {:?}", order, state);
+            }
             None
 
         }
