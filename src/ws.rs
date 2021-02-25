@@ -26,15 +26,12 @@ pub fn handle_msg(url: &str, api_key: &str, api_secret: &str, subscriptions: Vec
                 match serde_json::from_str::<Response>(&payload) {
                     Ok(Subscribe { subscribe, success }) => {
                         tx.send(NewStatus(format!("Subscribed to {}: {}", subscribe, success)));
-                        ()
                     }
                     Ok(Info { info, .. }) => {
                         tx.send(NewStatus(format!("Info on: {}", info)));
-                        ()
                     }
                     Ok(Error { error, .. }) => {
                         tx.send(NewStatus(format!("Error on: {:?}", error)));
-                        ()
                     }
                     Ok(Table(OrderBook10{ ref data, .. })) => {
                         data.first().map(|x| tx.send(NewAsk(x.first_ask())));

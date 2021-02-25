@@ -49,13 +49,13 @@ pub enum Table {
         action: TableAction,
         data: Vec<OrderBookRow>
     },
-    Order {
-        action: TableAction,
-        data: Vec<OrderRow>
-    },
     OrderBook10 {
         action: TableAction,
         data: Vec<OrderBookRow>,
+    },
+    Order {
+        action: TableAction,
+        data: Vec<OrderRow>
     },
     Funding {
         action: TableAction,

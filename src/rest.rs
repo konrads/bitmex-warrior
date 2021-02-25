@@ -3,10 +3,11 @@ use std::sync::mpsc;
 use crate::sign::sign;
 use chrono::{Duration, Utc};
 use reqwest;
-use reqwest::header::{HeaderValue, CONTENT_TYPE};
+use reqwest::StatusCode;
 
-use crate::model::{ExchangeOrder, ExchangeCmd, ExchangeCmd::*, OrchestratorEvent, OrchestratorEvent::*};
+use crate::model::{Side, OrderStatus, OrderType, ExchangeOrder, ExchangeCmd, ExchangeCmd::*, OrchestratorEvent, OrchestratorEvent::*};
 use crate::model::OrderType::{Limit, Market};
+use crate::rest_model::{Response, Order};
 use std::collections::HashMap;
 
 
@@ -57,10 +58,30 @@ pub async fn issue_order(root_url: &str, api_key: &str, api_secret: &str, symbol
         // .body(url_params_str);
         .form(&url_params);
 
-    // panic!("...req!!!! {:?}", req.build());
-
     let res = req.send().await?;
-    tx.send(NewStatus(res.text().await?.to_string()));
+    match res.status() {
+        StatusCode::OK => {
+            let resp_body = res.text().await?;
+            match serde_json::from_str::<Response>(&resp_body) {
+                Ok(Response::Order(Order { cl_ord_id, ord_status, ord_type,  price, order_qty, side, .. })) => {
+                    tx.send(
+                        UpdateOrder(ExchangeOrder {
+                            cl_ord_id: cl_ord_id.to_string(),
+                            ord_status: ord_status.clone(),
+                            ord_type: ord_type.unwrap_or_else(|| OrderType::Market).clone(),
+                            price: price,
+                            qty: order_qty,
+                            side: side}.clone()
+                        ));
+                }
+                Err(err) =>
+                    panic!("Error {} for unknown rest model: {:?}", resp_body, err)
+            }
+        }
+        _ => {
+            tx.send(NewStatus(format!("Received unexpected http response: {:?}", res)));
+        }
+    }
     Ok(())
 }
 

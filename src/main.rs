@@ -10,11 +10,12 @@ use std::collections::HashMap;
 // use env_logger;
 mod behaviour;
 mod model;
-mod rest;
 mod render;
 mod sign;
 mod ws;
 mod ws_model;
+mod rest;
+mod rest_model;
 
 use model::*;
 use model::{OrchestratorEvent::*, PriceType::*};
@@ -32,12 +33,11 @@ use bitmex_warrior::{show_cursor, refresh_ui};
 use std::net::TcpListener;
 use tungstenite::{connect, Error, Message, Result};
 
-const BITMEX_URL: &str = "wss://www.bitmex.com/realtime";
 
 const USER_GUIDE: &str =
 ".-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-.\r
 |                                       |\r
-|              BITMEX WARRIOR           |\r
+|             BITMEX WARRIOR            |\r
 |                                       |\r
 |  z -> buy @ bid      x -> sell @ ask  |\r
 |  a -> buy @ ask      s -> sell @ bid  |\r
@@ -85,11 +85,9 @@ fn main() {
                         match cmd {
                             ExchangeCmd::CancelOrder(cl_ord_id) => {
                                 rest::cancel_order(CFG.http_url.as_str(), CFG.api_key.as_str(), CFG.api_secret.as_str(), cl_ord_id, &mut tx3.clone());
-                                ()
                             }
                             ExchangeCmd::IssueOrder(order) => {
                                 rest::issue_order(CFG.http_url.as_str(), CFG.api_key.as_str(), CFG.api_secret.as_str(), CFG.symbol.as_str(), &order, &mut tx3.clone());
-                                ()
                             }
                         }
                     }
