@@ -4,7 +4,7 @@ use model::State;
 
 pub fn render_state(header: &str, state: &State) -> String {
     let recent_order_if_present = match state.order {
-        Some(ref o) => format!("\r\nCURR ORDER: {} {} {:.5} @ {:.5}", o.ord_type, o.ord_status, o.qty, o.price),
+        Some(ref o) => format!("\r\nCURR ORDER: {} {} {} {:.2} @ {:.2}", o.side, o.ord_type, o.ord_status, o.qty, o.price),
         None => "".to_string()
     };
     format!("{}\r

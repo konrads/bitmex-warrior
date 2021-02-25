@@ -127,7 +127,6 @@ fn main() {
     });
 
     let stdin = stdin();
-    let mut prev_key = Key::Ctrl('.');  // some random key...
     // http://ticki.github.io/blog/making-terminal-applications-in-rust-with-termion/
     for c in stdin.keys() {
         let key = c.unwrap();
@@ -135,7 +134,6 @@ fn main() {
             Key::Char('+') | Key::Char('=') => { tx.send(UpQty).unwrap(); () },
             Key::Char('-') | Key::Char('_') => { tx.send(DownQty).unwrap(); () },
             Key::Char('o') => { tx.send(RotateOrderType).unwrap(); () },
-            _ if key == prev_key => (),
             Key::Char('z') => { tx.send(Buy(Bid)).unwrap();  () },
             Key::Char('x') => { tx.send(Sell(Ask)).unwrap(); () },
             Key::Char('a') => { tx.send(Buy(Ask)).unwrap();  () },
@@ -148,7 +146,6 @@ fn main() {
             },
             _other => ()  // { write!(stdout(), "{}{}...{:?}{}", termion::cursor::Goto(1, 1), termion::clear::All, _other, termion::cursor::Hide).unwrap(); () },
         }
-        prev_key = key;
     }
 
     orchestrator_thread.join().unwrap();
