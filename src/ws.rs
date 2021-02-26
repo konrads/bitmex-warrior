@@ -39,12 +39,12 @@ pub fn handle_msg(url: &str, api_key: &str, api_secret: &str, subscriptions: Vec
                         for x in data {
                             tx.send(
                                 UpdateOrder(ExchangeOrder {
-                                    cl_ord_id: x.cl_ord_id.to_string(),
-                                    ord_status: x.ord_status.clone(),
-                                    ord_type: x.ord_type.clone(),
-                                    price: x.price.clone(),
-                                    qty: x.order_qty.clone(),
-                                    side: x.side.clone()
+                                    cl_ord_id:  x.cl_ord_id.to_string(),
+                                    ord_status: x.ord_status,
+                                    ord_type:   x.ord_type,
+                                    price:      x.price,
+                                    qty:        x.order_qty,
+                                    side:       x.side
                                 }));
                         }
                     }
