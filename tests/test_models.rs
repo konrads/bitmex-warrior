@@ -1,10 +1,11 @@
 use chrono::prelude::*;
+use serde_json;
+
 use bitmex_warrior::model::*;
 use bitmex_warrior::rest_model;
 use bitmex_warrior::rest_model::Order;
 use bitmex_warrior::ws_model;
-use bitmex_warrior::ws_model::{Table, TableAction, OrderRow, OrderBookRow};
-use serde_json;
+use bitmex_warrior::ws_model::{OrderBookRow, OrderRow, Table, TableAction};
 
 #[cfg(test)]
 

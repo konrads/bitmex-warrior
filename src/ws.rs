@@ -1,12 +1,10 @@
 use std::sync::mpsc;
 
 use chrono::{Duration, Utc};
-use hex::encode as hexify;
-use ring::hmac;
 use tungstenite::{connect, Message};
 
+use crate::model::{ExchangeOrder, OrchestratorEvent, OrchestratorEvent::*};
 use crate::sign::sign;
-use crate::model::{Side, OrderStatus, OrderType, ExchangeOrder, OrchestratorEvent, OrchestratorEvent::*};
 use crate::ws_model::{Request, Response, Response::*, Table::*};
 
 

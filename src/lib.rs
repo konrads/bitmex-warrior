@@ -1,10 +1,8 @@
 #[macro_use]
 extern crate enum_display_derive;
 
-use termion;
-
-pub mod orchestrator;
 pub mod model;
+pub mod orchestrator;
 pub mod render;
 pub mod sign;
 pub mod ws;

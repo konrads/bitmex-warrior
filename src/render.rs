@@ -1,5 +1,6 @@
-use crate::model;
 use model::State;
+
+use crate::model;
 
 
 pub fn render_state(header: &str, state: &State) -> String {

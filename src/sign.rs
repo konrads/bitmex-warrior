@@ -1,4 +1,3 @@
-use chrono::{Duration, Utc};
 use hex::encode as hexify;
 use ring::hmac;
 

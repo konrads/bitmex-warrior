@@ -1,15 +1,13 @@
 use std::sync::mpsc;
 
-use crate::sign::sign;
 use chrono::{Duration, Utc};
 use reqwest;
 use reqwest::StatusCode;
 
-use crate::model::{Side, OrderStatus, OrderType, ExchangeOrder, ExchangeCmd, ExchangeCmd::*, OrchestratorEvent, OrchestratorEvent::*};
+use crate::model::{ExchangeOrder, OrchestratorEvent, OrchestratorEvent::*};
 use crate::model::OrderType::{Limit, Market};
-use crate::rest_model::{Response, Order};
-use std::collections::HashMap;
-
+use crate::rest_model::{Order, Response};
+use crate::sign::sign;
 
 const API_ORDER_PATH: &str = "/api/v1/order";
 
@@ -29,10 +27,10 @@ pub async fn issue_order(root_url: &str, api_key: &str, api_secret: &str, symbol
              ("clOrdID".to_string(),     cl_ord_id.to_string())]
             //format!("symbol={}&ordType={}&timeInForce=GoodTillCancel&orderQty={}&side={}&price={}&clOrdID={}", symbol, *ord_type, qty, side, price, cl_ord_id)
         }
-        ExchangeOrder { cl_ord_id, ord_type, price, qty, side, .. } if ord_type.map_or_else(|| false, |x| x == Market) => {
+        ExchangeOrder { cl_ord_id, ord_type, qty, side, .. } if ord_type.map_or_else(|| false, |x| x == Market) => {
             //let qty_str = qty.to_string();
             vec![("symbol".to_string(),  symbol.to_string()),
-             ("ordType".to_string(),     "Limit".to_string()),
+             ("ordType".to_string(),     "Market".to_string()),
              ("timeInForce".to_string(), "GoodTillCancel".to_string()),
              ("orderQty".to_string(),    qty.unwrap().to_string()),
              ("side".to_string(),        side.unwrap().to_string()),
@@ -78,8 +76,8 @@ pub async fn issue_order(root_url: &str, api_key: &str, api_secret: &str, symbol
                     panic!("Error {} for unknown rest model: {:?}", resp_body, err)
             }
         }
-        _ => {
-            tx.send(NewStatus(format!("Received unexpected http response: {:?}", res)));
+        status => {
+            tx.send(NewStatus(format!("Received unexpected http response status {}: {:?}\nreq: {:?}", status, res.text().await?, url_params_str)));
         }
     }
     Ok(())

@@ -1,8 +1,10 @@
+use std::fmt::Display;
+
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::fmt::Display;
 use uuid::Uuid;
-use super::model::{Side, OrderStatus, OrderType};
+
+use super::model::{OrderStatus, OrderType, Side};
 
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]

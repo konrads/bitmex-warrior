@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use config::{ConfigError, Config, File, Environment};
+use config::{ConfigError, Config, File};
 use std::fmt::Display;
 
 

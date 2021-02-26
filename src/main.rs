@@ -1,11 +1,26 @@
 #[macro_use]
 extern crate config;
 #[macro_use]
-extern crate lazy_static;
-#[macro_use]
 extern crate enum_display_derive;
+#[macro_use]
+extern crate lazy_static;
 
-use std::collections::HashMap;
+use std::io::{stdin, stdout, Write};
+use std::net::TcpListener;
+use std::sync::mpsc;
+use std::thread;
+
+use log4rs;
+use termion::event::Key;
+use termion::input::TermRead;
+use termion::raw::IntoRawMode;
+
+use bitmex_warrior::{refresh_ui, show_cursor};
+use model::*;
+use model::{OrchestratorEvent::*, PriceType::*};
+use orchestrator::process_event;
+use render::render_state;
+use ws::handle_msg;
 
 mod orchestrator;
 mod model;
@@ -15,24 +30,6 @@ mod ws;
 mod ws_model;
 mod rest;
 mod rest_model;
-
-use model::*;
-use model::{OrchestratorEvent::*, PriceType::*};
-use ws_model::*;
-use ws::handle_msg;
-use render::render_state;
-use orchestrator::process_event;
-use std::io::{stdin, stdout, Write};
-use termion::event::Key;
-use termion::input::TermRead;
-use termion::raw::IntoRawMode;
-use std::sync::mpsc;
-use std::thread;
-use bitmex_warrior::{show_cursor, refresh_ui};
-use std::net::TcpListener;
-use tungstenite::{connect, Error, Message, Result};
-use log4rs;
-
 
 const USER_GUIDE: &str =
 ".-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-.\r

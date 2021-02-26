@@ -34,12 +34,12 @@ pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> 
             state.ask = *ask;
             None
         }
-        Buy(price_type) | Sell(price_type) if state.bid < 0.0 || state.ask < 0.0 => {
+        Buy(_) | Sell(_) if state.bid < 0.0 || state.ask < 0.0 => {
             state.has_refreshed = true;
             state.status = "Won't trade till ask/bid populated!".to_string();
             None
         }
-        Buy(price_type) | Sell(price_type) if state.order.is_some() => {
+        Buy(_) | Sell(_) if state.order.is_some() => {
             state.has_refreshed = true;
             state.status = format!("Won't trade whilst another trade {} is in force!", state.order.as_ref().unwrap().cl_ord_id);
             None
