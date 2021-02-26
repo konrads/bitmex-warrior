@@ -82,7 +82,7 @@ fn main() {
     let orchestrator_thread = thread::spawn(move || {
         let mut state = State::new(CFG.init_qty, CFG.qty_inc);
         let mut stdout = stdout().into_raw_mode().unwrap();
-        write!(stdout, "{}{}{}{}", termion::cursor::Goto(1, 1), termion::clear::All, USER_GUIDE, termion::cursor::Hide).unwrap();
+        refresh_ui!(stdout, USER_GUIDE);
         loop {
             match rx.recv() {
                 Ok(Exit) => {
@@ -128,20 +128,16 @@ fn main() {
     for c in stdin.keys() {
         let key = c.unwrap();
         match key {
-            Key::Char('+') | Key::Char('=') => { tx.send(UpQty).unwrap(); () },
-            Key::Char('-') | Key::Char('_') => { tx.send(DownQty).unwrap(); () },
-            Key::Char('o') => { tx.send(RotateOrderType).unwrap(); () },
-            Key::Char('z') => { tx.send(Buy(Bid)).unwrap();  () },
-            Key::Char('x') => { tx.send(Sell(Ask)).unwrap(); () },
-            Key::Char('a') => { tx.send(Buy(Ask)).unwrap();  () },
-            Key::Char('s') => { tx.send(Sell(Bid)).unwrap(); () },
-            Key::Char('c') => { tx.send(CancelLast).unwrap(); () },
-            Key::Ctrl('c') => {
-                tx.send(Exit).unwrap();
-                // ws_socket.close(None);
-                break
-            },
-            _other => ()  // { write!(stdout(), "{}{}...{:?}{}", termion::cursor::Goto(1, 1), termion::clear::All, _other, termion::cursor::Hide).unwrap(); () },
+            Key::Char('+') | Key::Char('=') => tx.send(UpQty).unwrap(),
+            Key::Char('-') | Key::Char('_') => tx.send(DownQty).unwrap(),
+            Key::Char('o') => tx.send(RotateOrderType).unwrap(),
+            Key::Char('z') => tx.send(Buy(Bid)).unwrap(),
+            Key::Char('x') => tx.send(Sell(Ask)).unwrap(),
+            Key::Char('a') => tx.send(Buy(Ask)).unwrap(),
+            Key::Char('s') => tx.send(Sell(Bid)).unwrap(),
+            Key::Char('c') => tx.send(CancelLast).unwrap(),
+            Key::Ctrl('c') => { tx.send(Exit).unwrap(); break },
+            _other => ()
         }
     }
 
