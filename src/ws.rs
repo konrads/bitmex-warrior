@@ -8,7 +8,7 @@ use crate::sign::sign;
 use crate::ws_model::{Request, Response, Response::*, Table::*};
 
 
-pub fn handle_msg(url: &str, api_key: &str, api_secret: &str, subscriptions: Vec<String>, tx: &mpsc::Sender<OrchestratorEvent>) {
+pub fn handle_msgs(url: &str, api_key: &str, api_secret: &str, subscriptions: Vec<String>, tx: &mpsc::Sender<OrchestratorEvent>) {
     let expires = (Utc::now() + Duration::seconds(100)).timestamp();
     let signature = sign(&format!("GET/realtime{}", expires), api_secret);
     let authenticate = Request::Authenticate(api_key.to_string(), expires, signature);

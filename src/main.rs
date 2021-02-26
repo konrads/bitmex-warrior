@@ -1,4 +1,3 @@
-extern crate config;
 #[macro_use]
 extern crate enum_display_derive;
 #[macro_use]
@@ -16,9 +15,6 @@ use termion::raw::IntoRawMode;
 use bitmex_warrior::{refresh_ui, show_cursor};
 use model::*;
 use model::{OrchestratorEvent::*, PriceType::*};
-use orchestrator::process_event;
-use render::render_state;
-use ws::handle_msg;
 
 mod orchestrator;
 mod model;
@@ -28,6 +24,7 @@ mod ws;
 mod ws_model;
 mod rest;
 mod rest_model;
+
 
 const USER_GUIDE: &str =
 ".-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-.\r
@@ -89,7 +86,7 @@ fn main() {
                     break
                 },
                 Ok(e) => {
-                    if let Some(cmd) = process_event(&e, &mut state) {
+                    if let Some(cmd) = orchestrator::process_event(&e, &mut state) {
                         match cmd {
                             ExchangeCmd::CancelOrder(cl_ord_id) => {
                                 rest::cancel_order(&CFG.http_url, &CFG.api_key, &CFG.api_secret, cl_ord_id, &mut tx3.clone());
@@ -100,8 +97,8 @@ fn main() {
                         }
                     }
                     if state.has_refreshed {
-                        let render = render_state(USER_GUIDE, &state);
-                        refresh_ui!(stdout, render);
+                        let rendered = render::render_state(USER_GUIDE, &state);
+                        refresh_ui!(stdout, rendered);
                     }
                 },
                 Err(err) => {
@@ -113,12 +110,7 @@ fn main() {
     });
 
     let _ws_thread = thread::spawn(move || {
-        handle_msg(
-            &CFG.wss_url,
-            &CFG.api_key,
-            &CFG.api_secret,
-            CFG.wss_subscriptions.clone(),
-            &tx2);
+        ws::handle_msgs(&CFG.wss_url, &CFG.api_key, &CFG.api_secret, CFG.wss_subscriptions.clone(), &tx2);
     });
 
     let stdin = stdin();
