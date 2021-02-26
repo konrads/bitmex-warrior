@@ -22,40 +22,47 @@ pub fn handle_msgs(url: &str, api_key: &str, api_secret: &str, subscriptions: Ve
         match msg {
             Message::Text(ref payload) => {
                 match serde_json::from_str::<Response>(&payload) {
-                    Ok(Subscribe { subscribe, success }) => {
-                        tx.send(NewStatus(format!("Subscribed to {}: {}", subscribe, success)));
-                    }
-                    Ok(Info { info, .. }) => {
-                        tx.send(NewStatus(format!("Info on: {}", info)));
-                    }
-                    Ok(Error { error, .. }) => {
-                        tx.send(NewStatus(format!("Error on: {:?}", error)));
-                    }
-                    Ok(Table(OrderBook10{ ref data, .. })) => {
-                        data.first().map(|x| tx.send(NewAsk(x.first_ask())));
-                        data.first().map(|x| tx.send(NewBid(x.first_bid())));
-                    }
-                    Ok(Table(Order{ ref data, .. })) => {
-                        for x in data {
-                            tx.send(
-                                UpdateOrder(ExchangeOrder {
-                                    cl_ord_id:  x.cl_ord_id.to_string(),
-                                    ord_status: x.ord_status,
-                                    ord_type:   x.ord_type,
-                                    price:      x.price,
-                                    qty:        x.order_qty,
-                                    side:       x.side
-                                }));
+                    Ok(ws_resp) =>
+                        for x in ws_resp_2_orchestrator_event(&ws_resp) {
+                            tx.send(x).unwrap();
                         }
-                    }
-                    Ok(e @ Table { .. }) =>
-                        log::info!("ignoring other table: {:?}", e),
                     Err(err) =>
                         log::error!("channel error {} on payload {}", err, &payload),
                 }
             }
             Message::Binary(_) | Message::Ping(_) | Message::Pong(_) => {}
             Message::Close(_) => break
+        }
+    }
+}
+
+fn ws_resp_2_orchestrator_event(resp: &Response) -> Vec<OrchestratorEvent> {
+    match resp {
+        Subscribe { subscribe, success } =>
+            vec!(NewStatus(format!("Subscribed to {}: {}", subscribe, success))),
+        Info { info, .. } =>
+            vec!(NewStatus(format!("Info on: {}", info))),
+        Error { error, .. } =>
+            vec!(NewStatus(format!("Error on: {:?}", error))),
+        Table(OrderBook10{ ref data, .. }) => {
+            let mut events1 = data.first().iter().map(|x| NewAsk(x.first_ask())).collect::<Vec<OrchestratorEvent>>();
+            let mut events2 = data.first().iter().map(|x| NewBid(x.first_bid())).collect::<Vec<OrchestratorEvent>>();
+            events1.append(&mut events2);
+            events1
+        },
+        Table(Order{ ref data, .. }) =>
+            data.iter().map(|x|
+                UpdateOrder(ExchangeOrder {
+                    cl_ord_id:  x.cl_ord_id.to_string(),
+                    ord_status: x.ord_status,
+                    ord_type:   x.ord_type,
+                    price:      x.price,
+                    qty:        x.order_qty,
+                    side:       x.side
+                })).collect(),
+        e @ Table { .. } => {
+            log::info!("ignoring other table: {:?}", e);
+            Vec::new()
         }
     }
 }
