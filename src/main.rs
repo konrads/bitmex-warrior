@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate config;
 #[macro_use]
 extern crate enum_display_derive;
@@ -6,7 +5,6 @@ extern crate enum_display_derive;
 extern crate lazy_static;
 
 use std::io::{stdin, stdout, Write};
-use std::net::TcpListener;
 use std::sync::mpsc;
 use std::thread;
 
@@ -94,10 +92,10 @@ fn main() {
                     if let Some(cmd) = process_event(&e, &mut state) {
                         match cmd {
                             ExchangeCmd::CancelOrder(cl_ord_id) => {
-                                rest::cancel_order(CFG.http_url.as_str(), CFG.api_key.as_str(), CFG.api_secret.as_str(), cl_ord_id, &mut tx3.clone());
+                                rest::cancel_order(&CFG.http_url, &CFG.api_key, &CFG.api_secret, cl_ord_id, &mut tx3.clone());
                             }
                             ExchangeCmd::IssueOrder(order) => {
-                                rest::issue_order(CFG.http_url.as_str(), CFG.api_key.as_str(), CFG.api_secret.as_str(), CFG.symbol.as_str(), &order, &mut tx3.clone());
+                                rest::issue_order(&CFG.http_url, &CFG.api_key, &CFG.api_secret, &CFG.symbol.as_str(), &order, &mut tx3.clone());
                             }
                         }
                     }
@@ -116,9 +114,9 @@ fn main() {
 
     let _ws_thread = thread::spawn(move || {
         handle_msg(
-            CFG.wss_url.as_str(),
-            CFG.api_key.as_str(),
-            CFG.api_secret.as_str(),
+            &CFG.wss_url,
+            &CFG.api_key,
+            &CFG.api_secret,
             CFG.wss_subscriptions.clone(),
             &tx2);
     });
@@ -136,7 +134,10 @@ fn main() {
             Key::Char('a') => tx.send(Buy(Ask)).unwrap(),
             Key::Char('s') => tx.send(Sell(Bid)).unwrap(),
             Key::Char('c') => tx.send(CancelLast).unwrap(),
-            Key::Ctrl('c') => { tx.send(Exit).unwrap(); break },
+            Key::Ctrl('c') => {
+                tx.send(Exit).unwrap();
+                break
+            },
             _other => ()
         }
     }

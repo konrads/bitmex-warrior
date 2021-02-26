@@ -14,7 +14,6 @@ const API_ORDER_PATH: &str = "/api/v1/order";
 
 #[tokio::main]
 pub async fn issue_order(root_url: &str, api_key: &str, api_secret: &str, symbol: &str, order: &ExchangeOrder, tx: &mut mpsc::Sender<OrchestratorEvent>) -> Result<(), reqwest::Error> {
-    // let mut params = HashMap::new();
     let url_params = match order {
         ExchangeOrder { cl_ord_id, ord_type, price, qty, side, .. } if ord_type.map_or_else(|| false, |x| x == Limit) => {
             vec![("symbol".to_string(),  symbol.to_string()),
@@ -64,12 +63,12 @@ pub async fn issue_order(root_url: &str, api_key: &str, api_secret: &str, symbol
                 Ok(Response::Order(Order { cl_ord_id, ord_status, ord_type,  price, order_qty, side, .. })) => {
                     tx.send(
                         UpdateOrder(ExchangeOrder {
-                            cl_ord_id: cl_ord_id.to_string(),
-                            ord_status: ord_status.clone(),
-                            ord_type: ord_type.clone(),
-                            price: Some(price.clone()),
-                            qty: Some(order_qty.clone()),
-                            side: Some(side)}.clone()
+                            cl_ord_id,
+                            ord_status,
+                            ord_type,
+                            price: Some(price),
+                            qty:   Some(order_qty),
+                            side:  Some(side)}
                         ));
                 }
                 Err(err) =>
@@ -100,6 +99,6 @@ pub async fn cancel_order(root_url: &str, api_key: &str, api_secret: &str, cl_or
         .send()
         .await?;
 
-    tx.send(NewStatus(res.text().await?.to_string()));
+    tx.send(NewStatus(res.text().await?));
     Ok(())
 }
