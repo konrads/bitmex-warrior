@@ -87,15 +87,14 @@ fn main() {
                 },
                 Ok(e) => {
                     if let Some(cmd) = orchestrator::process_event(&e, &mut state) {
-                        match cmd {
-                            ExchangeCmd::CancelOrder(cl_ord_id) => {
-                                rest::cancel_order(&CFG.http_url, &CFG.api_key, &CFG.api_secret, cl_ord_id, &mut tx3.clone());
-                            }
-                            ExchangeCmd::IssueOrder(order) => {
-                                rest::issue_order(&CFG.http_url, &CFG.api_key, &CFG.api_secret, &CFG.symbol.as_str(), &order, &mut tx3.clone());
-                            }
-                        }
-                    }
+                        let rest_resp = match cmd {
+                            ExchangeCmd::CancelOrder(cl_ord_id) =>
+                                rest::cancel_order(&CFG.http_url, &CFG.api_key, &CFG.api_secret, cl_ord_id),
+                            ExchangeCmd::IssueOrder(order) =>
+                                rest::issue_order(&CFG.http_url, &CFG.api_key, &CFG.api_secret, &CFG.symbol.as_str(), &order)
+                        };
+                        rest_resp.map(|x| tx3.send(x).expect("Failed to send event"));
+                    };
                     if state.has_refreshed {
                         let rendered = render::render_state(USER_GUIDE, &state);
                         refresh_ui!(stdout, rendered);
@@ -104,7 +103,7 @@ fn main() {
                 Err(err) => {
                     log::error!("mpsc channel receive error: {:?}", err);
                     break
-                },
+                }
             }
         }
     });

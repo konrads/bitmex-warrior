@@ -103,7 +103,7 @@ pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> 
             None
 
         }
-        CancelLast if state.order.as_ref().map_or_else(|| false, |x| x.ord_status == OrderStatus::New || x.ord_status == OrderStatus::NotYetIssued) => {
+        CancelLast if state.order.as_ref().map_or_else(|| false, |x| x.ord_status == OrderStatus::New || x.ord_status == OrderStatus::NotYetIssued || x.ord_status == OrderStatus::PartiallyFilled) => {
             let order = state.order.as_ref().unwrap();
             state.has_refreshed = true;
             state.status = format!("Issued order cancel: {}", order.cl_ord_id);
