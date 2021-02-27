@@ -1,6 +1,7 @@
 use std::sync::mpsc;
 
 use chrono::{Duration, Utc};
+use thiserror::Error;
 use reqwest;
 use reqwest::StatusCode;
 
@@ -102,31 +103,12 @@ pub async fn cancel_order(root_url: &str, api_key: &str, api_secret: &str, cl_or
 }
 
 
-use std::fmt::Display;
-
-#[derive(Debug, Display)]
+#[derive(Error, Debug)]
 pub enum RestError {
-    HttpError,
-    ParseError,
-    ChannelSendError
-}
-
-impl std::error::Error for RestError {}
-
-impl From<serde_json::Error> for RestError {
-    fn from(e: serde_json::Error) -> Self {
-         RestError::ParseError
-    }
-}
-
-impl From<reqwest::Error> for RestError {
-    fn from(e: reqwest::Error) -> Self {
-        RestError::HttpError
-    }
-}
-
-impl<T> From<std::sync::mpsc::SendError<T>> for RestError {
-    fn from(e: std::sync::mpsc::SendError<T>) -> Self {
-        RestError::ChannelSendError
-    }
+    #[error("http response parse error: {0:?}")]
+    HttpError(#[from] reqwest::Error),
+    #[error("json parse error: {0:?}")]
+    ParseError(#[from] serde_json::Error),
+    #[error("channel send error: {0:?}")]
+    ChannelSendError(#[from] std::sync::mpsc::SendError<OrchestratorEvent>)
 }
