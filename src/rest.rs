@@ -13,7 +13,7 @@ const API_ORDER_PATH: &str = "/api/v1/order";
 
 
 #[tokio::main]
-pub async fn issue_order(root_url: &str, api_key: &str, api_secret: &str, symbol: &str, order: &ExchangeOrder, tx: &mut mpsc::Sender<OrchestratorEvent>) -> Result<(), reqwest::Error> {
+pub async fn issue_order(root_url: &str, api_key: &str, api_secret: &str, symbol: &str, order: &ExchangeOrder, tx: &mut mpsc::Sender<OrchestratorEvent>) -> Result<(), RestError> {
     let url_params = match order {
         ExchangeOrder { cl_ord_id, ord_type, price, qty, side, .. } if ord_type.map_or_else(|| false, |x| x == Limit) => {
             vec![("symbol",  symbol.to_string()),
@@ -59,21 +59,19 @@ pub async fn issue_order(root_url: &str, api_key: &str, api_secret: &str, symbol
     match res.status() {
         StatusCode::OK => {
             let resp_body = res.text().await?;
-            match serde_json::from_str::<Response>(&resp_body) {
-                Ok(Response::Order(Order { cl_ord_id, ord_status, ord_type,  price, order_qty, side, .. })) => {
+            match serde_json::from_str::<Response>(&resp_body)? {
+                Response::Order(Order { cl_ord_id, ord_status, ord_type,  price, order_qty, side, .. }) => {
                     tx.send(
                         UpdateOrder(ExchangeOrder {
                             cl_ord_id,
                             ord_status,
                             ord_type,
                             price: Some(price),
-                            qty:   Some(order_qty),
-                            side:  Some(side)}
-                        ));
+                            qty: Some(order_qty),
+                            side: Some(side)
+                        }));
                 }
-                Err(err) =>
-                    panic!("Error {} for unknown rest model: {:?}", resp_body, err)
-            }
+            };
         }
         status => {
             tx.send(NewStatus(format!("Received unexpected http response status {}: {:?}\nreq: {:?}", status, res.text().await?, url_params_str)));
@@ -83,7 +81,7 @@ pub async fn issue_order(root_url: &str, api_key: &str, api_secret: &str, symbol
 }
 
 #[tokio::main]
-pub async fn cancel_order(root_url: &str, api_key: &str, api_secret: &str, cl_ord_id: &str, tx: &mut mpsc::Sender<OrchestratorEvent>) -> Result<(), reqwest::Error> {
+pub async fn cancel_order(root_url: &str, api_key: &str, api_secret: &str, cl_ord_id: &str, tx: &mut mpsc::Sender<OrchestratorEvent>) -> Result<(), RestError> {
     let url_params = format!("clOrdID={}", cl_ord_id);
     let expires = (Utc::now() + Duration::seconds(100)).timestamp();
     let signature = sign(&format!("DELETE{}{}{}", API_ORDER_PATH, expires, &url_params), api_secret);
@@ -99,6 +97,36 @@ pub async fn cancel_order(root_url: &str, api_key: &str, api_secret: &str, cl_or
         .send()
         .await?;
 
-    tx.send(NewStatus(res.text().await?));
+    tx.send(NewStatus(res.text().await?))?;
     Ok(())
+}
+
+
+use std::fmt::Display;
+
+#[derive(Debug, Display)]
+pub enum RestError {
+    HttpError,
+    ParseError,
+    ChannelSendError
+}
+
+impl std::error::Error for RestError {}
+
+impl From<serde_json::Error> for RestError {
+    fn from(e: serde_json::Error) -> Self {
+         RestError::ParseError
+    }
+}
+
+impl From<reqwest::Error> for RestError {
+    fn from(e: reqwest::Error) -> Self {
+        RestError::HttpError
+    }
+}
+
+impl<T> From<std::sync::mpsc::SendError<T>> for RestError {
+    fn from(e: std::sync::mpsc::SendError<T>) -> Self {
+        RestError::ChannelSendError
+    }
 }

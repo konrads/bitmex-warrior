@@ -6,26 +6,23 @@ edition = "2018"
 default-run = "main"
 
 [dependencies]
-termion = "1.5.6"
-crossterm = "0.19.0"
-enum-display-derive = "*"
+chrono = { version = "0.4", features = ["serde"] }
+config = "0.10"
+enum-display-derive = "0.1"
+hex = "0.4"
+lazy_static = "1.4"
 log = "*"
-env_logger = "*"
+log4rs = "1.0"
+termion = "1.5.6"
+ring = "0.16"
+reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-csv = "1"
-chrono = { version = "0.4", features = ["serde"] }
-uuid = { version = "0.8", features = ["serde", "v4"] }
-tungstenite = "0.13.0"
-bitmex = "0.2"
-ring = "0.16"
-hex = "0.4"
-config = "0.10"
-lazy_static = "1.4"
-reqwest = { version = "0.11", features = ["json"] }
+thiserror = "1.0"
 tokio = { version = "1", features = ["full"] }
+tungstenite = "0.13.0"
 urlencoding = {version = "1.1.1" }
-log4rs = "*"
+uuid = { version = "0.8", features = ["serde", "v4"] }
 
 [[bin]]
 name = "main"
