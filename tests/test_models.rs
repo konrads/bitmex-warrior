@@ -9,6 +9,7 @@ use bitmex_warrior::ws_model::{OrderBookRow, OrderRow, Table, TableAction};
 
 #[cfg(test)]
 
+#[allow(non_upper_case_globals)]
 const ts_str: &str = "2020-01-01T00:00:00Z";
 
 #[test]

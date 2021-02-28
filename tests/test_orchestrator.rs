@@ -4,6 +4,7 @@ use bitmex_warrior::orchestrator::process_event;
 #[cfg(test)]
 
 #[test]
+#[allow(non_snake_case)]
 fn test_process_events__up_down_qty() {
     let state = &mut State::new(10.0, 1.0);
     let effect1 = process_event(&OrchestratorEvent::UpQty, &mut *state);

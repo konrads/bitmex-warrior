@@ -14,8 +14,8 @@ pub fn handle_msgs(url: &str, api_key: &str, api_secret: &str, subscriptions: Ve
     let authenticate = Request::Authenticate(api_key.to_string(), expires, signature);
     let (mut ws_socket, _) = connect(url).expect(&format!("Failed to connect to ws_url {}", url));
     let subscribe = Request::Subscribe(subscriptions);
-    ws_socket.write_message(Message::text(serde_json::to_string(&authenticate).expect(&format!("Failed to send authenticate event {:?}", &authenticate))));
-    ws_socket.write_message(Message::text(serde_json::to_string(&subscribe).expect(&format!("Failed to send subscribe event {:?}", &subscribe))));
+    ws_socket.write_message(Message::text(serde_json::to_string(&authenticate).expect(&format!("Failed to parse authenticate event {:?}", &authenticate)))).expect(&format!("Failed to send authenticate event {:?}", &authenticate));
+    ws_socket.write_message(Message::text(serde_json::to_string(&subscribe).expect(&format!("Failed to parse subscribe event {:?}", &subscribe)))).expect(&format!("Failed to send subscribe event {:?}", &subscribe));
 
     loop {
         let msg= ws_socket.read_message().expect("Failed to read ws message");
