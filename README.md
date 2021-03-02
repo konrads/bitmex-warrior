@@ -23,7 +23,18 @@ TO RUN CLI
 cargo run --bin cli -- --api-secret xx yy
 ```
 
-TODOS
------
-* consider integration vs unit tests...
-* add doc comment tests
+TO RUN RELEASES
+---------------
+```
+cargo build && cargo build --release
+target/debug/cli
+target/debug/main
+target/release/cli
+target/release/main
+```
+
+TO TEST
+-------
+```
+cargo test && cargo test --doc
+```

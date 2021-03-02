@@ -8,6 +8,7 @@ use crate::sign::sign;
 use crate::ws_model::{Request, Response, Response::*, Table::*};
 
 
+/// Listen to WS messages and push them to supplied channel.
 pub fn handle_msgs(url: &str, api_key: &str, api_secret: &str, subscriptions: Vec<String>, tx: &mpsc::Sender<OrchestratorEvent>) {
     let expires = (Utc::now() + Duration::seconds(100)).timestamp();
     let signature = sign(&format!("GET/realtime{}", expires), api_secret);
@@ -36,6 +37,7 @@ pub fn handle_msgs(url: &str, api_key: &str, api_secret: &str, subscriptions: Ve
     }
 }
 
+/// Convert WS Response to OrchestratorEvent
 fn ws_resp_2_orchestrator_event(resp: &Response) -> Vec<OrchestratorEvent> {
     match resp {
         Subscribe { subscribe, success } =>
@@ -67,6 +69,8 @@ fn ws_resp_2_orchestrator_event(resp: &Response) -> Vec<OrchestratorEvent> {
     }
 }
 
+
+/// Example of internal tests, allows for testing non-public fns.
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -83,12 +87,12 @@ mod tests {
                     symbol: "XBTUSD".to_string(),
                     cl_ord_id: "12345".to_string(),
                     side: None,
-                    ord_status: OrderStatus::NotYetIssued,
+                    ord_status: OrderStatus::New,
                     ord_type: None,
                     order_qty: None,
                     price: None
                 })})),
-                vec!(UpdateOrder(ExchangeOrder { cl_ord_id: "12345".to_string(), ord_status: OrderStatus::NotYetIssued, ord_type: None, price: None, qty: None, side: None }))
+                vec!(UpdateOrder(ExchangeOrder { cl_ord_id: "12345".to_string(), ord_status: OrderStatus::New, ord_type: None, price: None, qty: None, side: None }))
         );
     }
 }

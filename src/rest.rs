@@ -11,6 +11,7 @@ use crate::sign::sign;
 const API_ORDER_PATH: &str = "/api/v1/order";
 
 
+/// Issue an Order.
 #[tokio::main]
 pub async fn issue_order(root_url: &str, api_key: &str, api_secret: &str, symbol: &str, order: &ExchangeOrder) -> Result<OrchestratorEvent, RestError> {
     let url_params = match order {
@@ -78,6 +79,7 @@ pub async fn issue_order(root_url: &str, api_key: &str, api_secret: &str, symbol
     }
 }
 
+/// Cancel an Order.
 #[tokio::main]
 pub async fn cancel_order(root_url: &str, api_key: &str, api_secret: &str, cl_ord_id: &str) -> Result<OrchestratorEvent, RestError> {
     let url_params = format!("clOrdID={}", cl_ord_id);

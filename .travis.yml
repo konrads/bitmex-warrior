@@ -3,4 +3,4 @@ cache: cargo
 rust:
   - stable
 script:
-  - cargo test --verbose
+  - cargo test --verbose && cargo test --doc --verbose

@@ -3,6 +3,7 @@ use model::{OrchestratorEvent, ExchangeCmd, ExchangeOrder, OrderStatus, Side, St
 use uuid::Uuid;
 
 
+/// DSL for converting OrchestratorEvent's and state into state and optional ExchangeCmd, eg.
 pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> Option<ExchangeCmd<'a>> {  // probably need dyn...
     state.has_refreshed = false;
     match event {
