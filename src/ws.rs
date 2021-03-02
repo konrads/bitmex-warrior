@@ -66,3 +66,29 @@ fn ws_resp_2_orchestrator_event(resp: &Response) -> Vec<OrchestratorEvent> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::OrderStatus;
+    use crate::ws_model::{TableAction::Insert, OrderRow};
+
+    #[test]
+    #[allow(non_snake_case)]
+    fn test__ws_resp_2_orchestrator_event() {
+        assert_eq!(
+            ws_resp_2_orchestrator_event(
+                &Table(Order{ action: Insert, data: vec!(OrderRow {
+                    timestamp: None,
+                    symbol: "XBTUSD".to_string(),
+                    cl_ord_id: "12345".to_string(),
+                    side: None,
+                    ord_status: OrderStatus::NotYetIssued,
+                    ord_type: None,
+                    order_qty: None,
+                    price: None
+                })})),
+                vec!(UpdateOrder(ExchangeOrder { cl_ord_id: "12345".to_string(), ord_status: OrderStatus::NotYetIssued, ord_type: None, price: None, qty: None, side: None }))
+        );
+    }
+}
