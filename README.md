@@ -10,31 +10,25 @@ Get yourself some keyboard shortcuts!
 
 Disclaimer: This is a Rust playground project, I know there are alternatives eg. Tampermonkey.
 
-TO RUN MAIN
------------
+Run via cargo
+-------------
 ```
-cargo run
-```
-
-TO RUN CLI
-----------
-(for manual testing)
-```
-cargo run --bin cli -- --api-secret xx yy
+cargo run  # main
+cargo run --bin cli -- --api-secret xx yy  # cli
 ```
 
-TO RUN RELEASES
----------------
+Build and run deliverables 
+--------------------------
 ```
 cargo build && cargo build --release
-target/debug/cli
 target/debug/main
-target/release/cli
+target/debug/cli --api-secret xx yy
 target/release/main
+target/release/cli --api-secret xx yy
 ```
 
-TO TEST
--------
+Run tests
+---------
 ```
 cargo test && cargo test --doc
 ```
