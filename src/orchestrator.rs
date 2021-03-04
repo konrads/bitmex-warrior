@@ -54,7 +54,7 @@ pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> 
             };
             state.has_refreshed = true;
             state.status = format!("New buy order {} of {} @ {}", cl_ord_id, state.qty, price);
-            let new_order = ExchangeOrder { cl_ord_id: cl_ord_id, ord_status: OrderStatus::NotYetIssued, qty: Some(state.qty), price: Some(price), side: Some(Side::Buy), ord_type: Some(state.order_type()) };
+            let new_order = ExchangeOrder { cl_ord_id, ord_status: OrderStatus::NotYetIssued, qty: Some(state.qty), price: Some(price), side: Some(Side::Buy), ord_type: Some(state.order_type()) };
             state.order = Some(new_order.clone());
             Some(IssueOrder(new_order))
         }
@@ -67,7 +67,7 @@ pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> 
             };
             state.has_refreshed = true;
             state.status = format!("New sell order {} of {} @ {}", cl_ord_id, state.qty, price);
-            let new_order = ExchangeOrder { cl_ord_id: cl_ord_id, ord_status: OrderStatus::NotYetIssued, qty: Some(state.qty), price: Some(price), side: Some(Side::Sell), ord_type: Some(state.order_type()) };
+            let new_order = ExchangeOrder { cl_ord_id, ord_status: OrderStatus::NotYetIssued, qty: Some(state.qty), price: Some(price), side: Some(Side::Sell), ord_type: Some(state.order_type()) };
             state.order = Some(new_order.clone());
             Some(IssueOrder(new_order))
         }
@@ -112,7 +112,7 @@ pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> 
         }
         CancelLast => {
             state.has_refreshed = true;
-            state.status = format!("No order active, ignoring cancel!");
+            state.status = "No order active, ignoring cancel!".to_string();
             None
         }
         NewStatus(status) => {

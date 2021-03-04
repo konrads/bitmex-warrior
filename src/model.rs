@@ -8,7 +8,7 @@ pub enum OrderType {
     Limit,
     Market
 }
-const ALL_ORDER_TYPES: &'static [OrderType] = &[OrderType::Limit, OrderType::Market];
+const ALL_ORDER_TYPES: &[OrderType] = &[OrderType::Limit, OrderType::Market];
 
 #[derive(Serialize, Deserialize, Debug, Display, PartialEq, Clone, Copy)]
 pub enum OrderStatus {
@@ -78,14 +78,14 @@ pub struct State {
 
 impl State {
     pub fn new(qty: f64, qty_increment: f64)-> Self {
-        State { bid: -1.0, ask: -1.0, qty: qty, qty_increment: qty_increment, order: None, status: "".to_string(), has_refreshed: false, order_type_ind: 0 }
+        State { bid: -1.0, ask: -1.0, qty, qty_increment, order: None, status: "".to_string(), has_refreshed: false, order_type_ind: 0 }
     }
 
     pub fn order_type(&self) -> OrderType {
-        (&ALL_ORDER_TYPES[self.order_type_ind]).clone()
+        ALL_ORDER_TYPES[self.order_type_ind]
     }
 
-    pub fn rotate_order_type(&mut self) -> () {
+    pub fn rotate_order_type(&mut self) {
         self.order_type_ind = (self.order_type_ind + 1) % ALL_ORDER_TYPES.len()
     }
 }

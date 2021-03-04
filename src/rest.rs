@@ -1,6 +1,5 @@
 use chrono::{Duration, Utc};
 use thiserror::Error;
-use reqwest;
 use reqwest::StatusCode;
 
 use crate::model::{ExchangeOrder, OrchestratorEvent, OrchestratorEvent::*};
