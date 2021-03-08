@@ -3,8 +3,9 @@ http_url   = "https://www.bitmex.com"
 # or for testnet: wss_url    = "wss://testnet.bitmex.com/realtime"
 # or for testnet: http_url   = "https://testnet.bitmex.com"
 
+# source <API_KEY> and <API_SECRET> from https://www.bitmex.com/app/apiKeys
 api_key    = "<API_KEY>"
-api_secret = "<SECRET>"
+api_secret = "<API_SECRET>"
 
 symbol = "XBTUSD"
 init_qty = 100
