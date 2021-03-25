@@ -1,6 +1,8 @@
+use std::borrow::Cow;
+
 use chrono::{Duration, Utc};
-use thiserror::Error;
 use reqwest::StatusCode;
+use thiserror::Error;
 
 use crate::model::{ExchangeOrder, OrchestratorEvent, OrchestratorEvent::*};
 use crate::model::OrderType::{Limit, Market};
@@ -12,27 +14,28 @@ const API_ORDER_PATH: &str = "/api/v1/order";
 
 /// Issue an Order.
 #[tokio::main]
-pub async fn issue_order(root_url: &str, api_key: &str, api_secret: &str, symbol: &str, order: &ExchangeOrder) -> Result<OrchestratorEvent, RestError> {
-    let url_params = match order {
+pub async fn issue_order<'a>(root_url: &'a str, api_key: &'a str, api_secret: &'a str, symbol: &'a str, order: &'a ExchangeOrder) -> Result<OrchestratorEvent, RestError> {
+    let url_params: Vec<(&str, Cow<'a, str>)> = match order {
         ExchangeOrder { cl_ord_id, ord_type, price, qty, side, .. } if ord_type.map_or_else(|| false, |x| x == Limit) => {
-            vec![("symbol",  symbol.to_string()),
-             ("ordType",     "Limit".to_string()),
-             ("timeInForce", "GoodTillCancel".to_string()),
-             // ("execInst",    "ParticipateDoNotInitiate".to_string()),
-             ("orderQty",    qty.unwrap().to_string()),
-             ("side",        side.unwrap().to_string()),
-             ("price",       price.unwrap().to_string()),
-             ("clOrdID",     cl_ord_id.to_string())]
+            vec![
+             ("symbol",  symbol.into()),
+             ("ordType",     "Limit".into()),
+             ("timeInForce", "GoodTillCancel".into()),
+             // ("execInst",    "ParticipateDoNotInitiate".into()),
+             ("orderQty",    qty.unwrap().to_string().into()),
+             ("side",        side.unwrap().to_string().into()),
+             ("price",       price.unwrap().to_string().into()),
+             ("clOrdID",     cl_ord_id.into())]
             //format!("symbol={}&ordType={}&timeInForce=GoodTillCancel&orderQty={}&side={}&price={}&clOrdID={}", symbol, *ord_type, qty, side, price, cl_ord_id)
         }
         ExchangeOrder { cl_ord_id, ord_type, qty, side, .. } if ord_type.map_or_else(|| false, |x| x == Market) => {
             //let qty_str = qty.to_string();
-            vec![("symbol",  symbol.to_string()),
-             ("ordType",     "Market".to_string()),
-             ("timeInForce", "GoodTillCancel".to_string()),
-             ("orderQty",    qty.unwrap().to_string()),
-             ("side",        side.unwrap().to_string()),
-             ("clOrdID",     cl_ord_id.to_string())]
+            vec![("symbol",  symbol.into()),
+             ("ordType",     "Market".into()),
+             ("timeInForce", "GoodTillCancel".into()),
+             ("orderQty",    qty.unwrap().to_string().into()),
+             ("side",        side.unwrap().to_string().into()),
+             ("clOrdID",     cl_ord_id.into())]
             //format!("symbol={}&ordType={}&timeInForce=GoodTillCancel&orderQty={}&side={}&clOrdID={}", symbol, *ord_type, qty, side, cl_ord_id)
         }
         other =>
