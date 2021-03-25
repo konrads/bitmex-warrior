@@ -7,7 +7,6 @@ use std::io::{stdin, stdout, Write};
 use std::sync::mpsc;
 use std::thread;
 
-use log4rs;
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
@@ -55,7 +54,6 @@ lazy_static! {
 /// 3. display current bid/ask as per WS feeds
 /// 4. list WebSocket events, perhaps in ncurses
 /// 5...∞ mutations of the above
-#[allow(unused_must_use)]
 fn main() {
     log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
     log::info!(r"
@@ -94,7 +92,7 @@ fn main() {
                             ExchangeCmd::IssueOrder(order) =>
                                 rest::issue_order(&CFG.http_url, &CFG.api_key, &CFG.api_secret, &CFG.symbol.as_str(), &order)
                         };
-                        rest_resp.map(|x| tx3.send(x).expect("Failed to send event"));  // could also add .ok() to supress warnings, as per https://stackoverflow.com/questions/53368303/why-am-i-getting-unused-result-which-must-be-used-result-may-be-an-err-vari
+                        rest_resp.map(|x| tx3.send(x).expect("Failed to send event")).ok();
                     };
                     if state.has_refreshed {
                         let rendered = render::render_state(USER_GUIDE, &state);

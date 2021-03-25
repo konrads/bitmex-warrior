@@ -4,6 +4,7 @@ use uuid::Uuid;
 
 
 /// DSL for converting OrchestratorEvent's and state into state and optional ExchangeCmd, eg.
+#[allow(clippy::float_cmp)]
 pub fn process_event<'a>(event: &'a OrchestratorEvent, state: &'a mut State) -> Option<ExchangeCmd<'a>> {  // probably need dyn...
     state.has_refreshed = false;
     match event {
