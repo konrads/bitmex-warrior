@@ -1,3 +1,12 @@
+mod orchestrator;
+mod model;
+mod render;
+mod sign;
+mod ws;
+mod ws_model;
+mod rest;
+mod rest_model;
+
 #[macro_use]
 extern crate enum_display_derive;
 #[macro_use]
@@ -12,17 +21,7 @@ use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 
 use bitmex_warrior::{refresh_ui, show_cursor};
-use model::*;
-use model::{OrchestratorEvent::*, PriceType::*};
-
-mod orchestrator;
-mod model;
-mod render;
-mod sign;
-mod ws;
-mod ws_model;
-mod rest;
-mod rest_model;
+use model::{*, OrchestratorEvent::*, PriceType::*};
 
 
 const USER_GUIDE: &str =
