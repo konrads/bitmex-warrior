@@ -76,38 +76,42 @@ fn main() {
         let mut state = State::new(CFG.init_qty, CFG.qty_inc);
         let mut stdout = stdout().into_raw_mode().unwrap();
         refresh_ui!(stdout, USER_GUIDE);
-        loop {
-            match rx.recv() {
-                Ok(Exit) => {
-                    println!();
-                    show_cursor!(stdout);
-                    break
-                },
-                Ok(e) => {
-                    if let Some(cmd) = orchestrator::process_event(&e, &mut state) {
-                        let rest_resp = match cmd {
-                            ExchangeCmd::CancelOrder(cl_ord_id) =>
-                                rest::cancel_order(&CFG.http_url, &CFG.api_key, &CFG.api_secret, cl_ord_id),
-                            ExchangeCmd::IssueOrder(order) =>
-                                rest::issue_order(&CFG.http_url, &CFG.api_key, &CFG.api_secret, &CFG.symbol.as_str(), &order)
+
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            loop {
+                match rx.recv() {
+                    Ok(Exit) => {
+                        println!();
+                        show_cursor!(stdout);
+                        break
+                    },
+                    Ok(e) => {
+                        if let Some(cmd) = orchestrator::process_event(&e, &mut state) {
+                            let rest_resp = match cmd {
+                                ExchangeCmd::CancelOrder(cl_ord_id) =>
+                                    rest::cancel_order(&CFG.http_url, &CFG.api_key, &CFG.api_secret, cl_ord_id).await,
+                                ExchangeCmd::IssueOrder(order) =>
+                                    rest::issue_order(&CFG.http_url, &CFG.api_key, &CFG.api_secret, &CFG.symbol.as_str(), &order).await
+                            };
+                            rest_resp.map(|x| tx3.send(x).expect("Failed to send event")).ok();
                         };
-                        rest_resp.map(|x| tx3.send(x).expect("Failed to send event")).ok();
-                    };
-                    if state.has_refreshed {
-                        let rendered = render::render_state(USER_GUIDE, &state);
-                        refresh_ui!(stdout, rendered);
+                        if state.has_refreshed {
+                            let rendered = render::render_state(USER_GUIDE, &state);
+                            refresh_ui!(stdout, rendered);
+                        }
+                    },
+                    Err(err) => {
+                        log::error!("mpsc channel receive error: {:?}", err);
+                        break
                     }
-                },
-                Err(err) => {
-                    log::error!("mpsc channel receive error: {:?}", err);
-                    break
                 }
             }
-        }
+        })
     });
 
-    let _ws_thread = thread::spawn(move || {
-        ws::handle_msgs(&CFG.wss_url, &CFG.api_key, &CFG.api_secret, CFG.wss_subscriptions.clone(), &tx2);
+    let _ws_thread = thread::spawn(|| {
+        ws::handle_msgs(&CFG.wss_url, &CFG.api_key, &CFG.api_secret, CFG.wss_subscriptions.clone(), tx2);
     });
 
     let stdin = stdin();

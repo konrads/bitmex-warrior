@@ -13,7 +13,6 @@ const API_ORDER_PATH: &str = "/api/v1/order";
 
 
 /// Issue an Order.
-#[tokio::main]
 pub async fn issue_order<'a>(root_url: &'a str, api_key: &'a str, api_secret: &'a str, symbol: &'a str, order: &'a ExchangeOrder) -> Result<OrchestratorEvent, RestError> {
     let url_params: Vec<(&str, Cow<'a, str>)> = match order {
         ExchangeOrder { cl_ord_id, ord_type, price, qty, side, .. } if ord_type.map_or_else(|| false, |x| x == Limit) => {
@@ -82,7 +81,6 @@ pub async fn issue_order<'a>(root_url: &'a str, api_key: &'a str, api_secret: &'
 }
 
 /// Cancel an Order.
-#[tokio::main]
 pub async fn cancel_order(root_url: &str, api_key: &str, api_secret: &str, cl_ord_id: &str) -> Result<OrchestratorEvent, RestError> {
     let url_params = format!("clOrdID={}", cl_ord_id);
     let expires = (Utc::now() + Duration::seconds(100)).timestamp();
