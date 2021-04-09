@@ -1,26 +1,30 @@
-use getopts::Options;
-use std::env;
-
+use clap::{App, AppSettings, Arg};
 use bitmex_warrior::sign;
 
 /// Playground for manual testing
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    let program = args[0].clone();
+    let app = App::new("cli")
+        .version("0.0.1")
+        .setting(AppSettings::SubcommandRequiredElseHelp)
+        .subcommand(
+            App::new("sign")
+                .arg(Arg::new("api-secret").short('a').long("api-secret").takes_value(true).required(true))
+                .arg(Arg::new("to-be-signed").index(1).required(true)),
+        )
+        .subcommand(
+            App::new("threads")
+        );
+    let arg_matches = app.get_matches();
 
-    let mut opts = Options::new();
-    opts.reqopt("a", "api-secret", "api-secret", "CREDENTIALS");
-    let matches = match opts.parse(&args[1..]) {
-        Ok(m) => { m }
-        Err(f) => { panic!(f.to_string()) }
+    match arg_matches.subcommand() {
+        Some(("sign", sign_matches)) => {
+            let api_secret = sign_matches.value_of("api-secret").unwrap();
+            let to_be_signed = sign_matches.value_of("to-be-signed").unwrap();
+            println!("signed to-be-signed: {}, api_secrets: {} -> {}", to_be_signed, api_secret, sign::sign(&to_be_signed, &api_secret));
+        }
+        Some(("threads", _threads_matches)) => {
+            println!("...threads")
+        }
+        _ => unreachable!()  // thanks to AppSettings::SubcommandRequiredElseHelp
     };
-    let api_secrets = matches.opt_str("api-secret").unwrap();
-    let s = if !matches.free.is_empty() {
-        matches.free[0].clone()
-    } else {
-        let brief = format!("Usage: {} [options]", program);
-        print!("{}", opts.usage(&brief));
-        return;
-    };
-    println!("signed s: {}, api_secrets: {} -> {}", s, &api_secrets, sign::sign(&s, &api_secrets));
 }
